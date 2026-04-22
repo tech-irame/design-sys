@@ -12,16 +12,20 @@ into a project root and reference it when building UI.
 
 ## 1. Visual Theme & Atmosphere
 
-**Editorial GRC.** Serious but never stodgy. Warm but precise. Dense when
-the work demands it, spacious when the content deserves air. The brand
-purple (`#6A12CD`) is the signature and is treated as a real character
-beat — not a token accent and not a reason for decoration.
+**Editorial GRC.** Serious but never stodgy. Precise, deliberate, quiet.
+Two canvases by role: a cool near-white `#FCFAFD` for app chrome
+(dashboards, data, workflows) and a warm `#FAF7F2` paper for long-form
+reports — so narrative surfaces retain editorial character while the
+working app reads modern and calm. A dark `brand-900` sidebar anchors
+the shell. The brand purple (`#6A12CD`) is the signature, treated as a
+real character beat — not a token accent and not a reason for decoration.
 
-**Mood words**: editorial, warm, precise, data-first, quietly AI-native.
+**Mood words**: editorial, precise, deliberate, data-first, quietly AI-native.
 
 **What this is**:
 - Long-form audit reports that feel like *The New Yorker* with a risk table.
-- Dashboards that respect the 8-hour workday of a compliance officer.
+- Dashboards that read as a newsroom CMS — dark chrome, cool canvas,
+  serif numerics doing real work.
 - AI responses that feel like a thoughtful analyst wrote them, not a chatbot.
 - Data density as a feature, not a crisis.
 
@@ -64,15 +68,29 @@ tokens (e.g., `--color-surface`, `--color-text`, `--color-danger`).
 
 > **Accessibility note**: `brand-600` on `paper-50` is ~4.0:1 — OK for large
 > display and button backgrounds with white text, NOT for small body copy.
-> For text on light surfaces use `brand-700` (~7.2:1).
+> For text on light surfaces use `brand-700` (~7.2:1). On the app `canvas`
+> (`#FCFAFD`) `brand-600` gains a hair more contrast (~4.2:1) — same rule.
 
-### Warm neutrals ("paper & ink")
+### App canvas (chrome surfaces)
+
+The working app sits on a cool canvas — brand-600 laid over white at ~2%.
+Cards on this canvas use a purple-tinted border (`canvas-border`) rather
+than the warm paper border, so elevation reads as intentional, not
+accidentally mismatched.
+
+| Token             | Hex        | Role                                          |
+|-------------------|------------|-----------------------------------------------|
+| `canvas`          | `#FCFAFD`  | **App canvas** — dashboards, data views, workflows |
+| `canvas-elevated` | `#FFFFFF`  | Cards, modals, popovers on canvas             |
+| `canvas-border`   | `#F0EAF6`  | Card / divider on canvas (brand-600 at ~8% on white) |
+
+### Warm neutrals ("paper & ink") — report surfaces
 
 | Token       | Hex       | Role                                                   |
 |-------------|-----------|--------------------------------------------------------|
-| `paper-0`   | `#FFFFFF` | Cards on tinted surfaces                               |
-| `paper-50`  | `#FAF7F2` | **Light canvas** (body background)                     |
-| `paper-100` | `#F3EEE5` | Subtle surface, zebra banding                          |
+| `paper-0`   | `#FFFFFF` | Cards on tinted surfaces (shared with `canvas-elevated`) |
+| `paper-50`  | `#FAF7F2` | **Report canvas** — reader mode, PDFs, narrative long-form |
+| `paper-100` | `#F3EEE5` | Subtle report surface, zebra banding                    |
 | `paper-200` | `#E8E1D2` | Divider on warm surface                                |
 | `paper-300` | `#D6CCB7` | Muted illustration baseline                            |
 | `ink-300`   | `#C2B9CB` | Placeholder text                                       |
@@ -83,8 +101,33 @@ tokens (e.g., `--color-surface`, `--color-text`, `--color-danger`).
 | `ink-800`   | `#1F1433` | Headings                                               |
 | `ink-900`   | `#0F0720` | Display, highest-contrast ink                          |
 
-**Dark mode inverts**: canvas `#12081E`, ink `#F1EDE3`, surfaces lifted with
-`brand-900` tints rather than pure black. Paper tokens remain warm.
+**Dark mode inverts**: app + report canvases unify to `#12081E`, ink
+`#F1EDE3`, surfaces lifted with `brand-900` tints rather than pure black.
+Paper tokens retain their warm hex values (they're only visible in printed
+exports and in the light-mode reader).
+
+### Sidebar (dark shell) — tokens
+
+The sidebar is anchored to `brand-900` in every theme. All typography and
+surface states compose from a white-opacity scale. **Do not use raw
+`rgba(255,255,255, …)` literals in app code** — compose from these tokens
+or add a new one through governance.
+
+| Token                      | Value                         | Role                              |
+|----------------------------|-------------------------------|-----------------------------------|
+| `sidebar-bg`               | `brand-900` (`#26064A`)       | Sidebar canvas                    |
+| `sidebar-border`           | `rgba(255 255 255 / 0.08)`    | Right divider, section rules      |
+| `sidebar-text`             | `rgba(255 255 255 / 0.85)`    | Default nav label                 |
+| `sidebar-text-dim`         | `rgba(255 255 255 / 0.55)`    | Section labels, subtitles         |
+| `sidebar-text-muted`       | `rgba(255 255 255 / 0.45)`    | Menu affordances (⋯, chevron)     |
+| `sidebar-surface`          | `rgba(255 255 255 / 0.06)`    | Profile card, inactive accent     |
+| `sidebar-surface-hover`    | `rgba(255 255 255 / 0.08)`    | Nav item hover                    |
+| `sidebar-surface-active`   | `rgba(255 255 255 / 0.12)`    | Nav item active (distinct from hover) |
+| `sidebar-accent`           | `#FFFFFF`                     | Active left bar, logo mark, badge bg |
+
+> **Active distinct from hover**: active background is `/ 0.12`, hover is
+> `/ 0.08`. The 3px left accent bar and weight-600 label are redundant
+> signals on top, not the only signals.
 
 ### Semantic (GRC-specific, not generic)
 
@@ -382,96 +425,127 @@ Everything snaps to this. Never introduce a new step without governance.
 - **Comfortable** (default): row 44px, cell pad 12/16px, body type.
 - **Compact**: row 32px, cell pad 6/12px, body-sm type.
 - Density is a user preference, stored in `localStorage`. Density toggle
-  sits in the Topbar ⚙ menu. Every table, data grid, and list supports
-  both — not a feature of the component.
+  lives in the sidebar logo-row kebab menu (global) OR per-table toolbar
+  (local override). Every table, data grid, and list supports both — not
+  a feature of the component.
 
 ### App shell
 
 - Left sidebar (256px expanded, 64px collapsed). Collapses at <1024px.
-- No top header bar — brand, search, and user profile live in the sidebar.
-- Content panel: `#FCFAFD` canvas (brand-600 at ~2%), 28px page padding.
+- No top header bar — global chrome lives in the sidebar; page context
+  lives in the first row of each page.
+- Content panel: `canvas` (`#FCFAFD`), **32px page padding** (8pt grid).
+- First content row: page header (see `Page header` below).
 
 ### Sidebar
 
-Dark sidebar anchored to brand-900. All content is white with opacity
-hierarchy. No header bar — the sidebar holds everything.
+Dark shell anchored to `brand-900`. All typography and surface states
+compose from the `sidebar-*` tokens defined in §2. **Do not write raw
+white-alpha literals** in app code.
 
 ```
-width: 256px
-background: brand-900
-border-right: 1px rgba(255,255,255,0.08)
-display: flex, column, full height
-
-Tokens:
-  --sidebar-bg:          brand-900
-  --sidebar-border:      rgba(255,255,255, 0.08)
-  --sidebar-text:        rgba(255,255,255, 0.85)
-  --sidebar-text-dim:    rgba(255,255,255, 0.55)
-  --sidebar-hover:       rgba(255,255,255, 0.08)
-  --sidebar-active-bg:   rgba(255,255,255, 0.08)
-  --sidebar-active-text: #FFFFFF
-  --sidebar-active-bar:  #FFFFFF
+width: 256px (expanded) · 64px (collapsed at <1024px)
+background: var(--sidebar-bg)
+border-right: 1px var(--sidebar-border)
+display: flex · column · full height
 ```
 
 **Structure** (top → bottom):
 
-1. **Logo row** — 30×30 icon (gradient brand-500→400, radius 8, shadow
-   `0 2px 6px brand-600/30`), brand name 15px/700 white, subtitle
-   10.5px/500 white/70% with dropdown chevron. Bottom border
-   `rgba(255,255,255,0.06)`. Padding 18px 16px 16px.
+1. **Logo row** — 30×30 mark (linear-gradient `brand-500 → brand-400`,
+   radius 8, `shadow-sm` tinted with `brand-600 / 0.30`), wordmark
+   `heading-sm` (15px/700) in `sidebar-accent`, subtitle 10.5px/500 in
+   `sidebar-text-dim` with dropdown chevron in `sidebar-text-muted`.
+   Bottom border 1px `sidebar-border`. Padding 18px 16px 16px.
 
-2. **Top actions** — "Ask IRA" (chat icon) and "Search" (search icon).
-   12px, #FFFFFF. Same `.sb-item` structure.
+2. **Top actions** — "Ask IRA" (chat icon), "Search" (search icon).
+   `.sb-item` treatment. 12px, `sidebar-accent` text.
 
-3. **Primary nav** — Home (active), Recents. Standard `.sb-item` at
-   36px height, 13px/520, `rgba(255,255,255,0.85)`.
+3. **Primary nav** — Home (active), Recents. Standard `.sb-item`.
 
 4. **Programs group** — section label "PROGRAMS" (10px/560, uppercase,
-   0.08em tracking, white/55%). Sub-items: Planning, Process Hub,
-   Risk Register (with white pill badge `14`, brand-600 text),
-   Control Library. All use `.sb-item` — same height, font, padding.
+   0.08em tracking, `sidebar-text-dim`). Sub-items: Planning, Process
+   Hub, Risk Register (with white pill badge `14` — `sidebar-accent` bg,
+   `brand-600` text), Control Library.
 
 5. **Main nav** — Dashboard, Report, Workflow Library, AI Concierge.
 
 6. **Bottom nav** — Configuration, Admin.
 
-7. **User profile** — card container `rgba(255,255,255,0.06)` bg +
-   `rgba(255,255,255,0.08)` border. Avatar 32×32 white bg, brand-600
-   text, weight 700. Name 13px/600 white. Role 11px white/55%.
-   Three-dot menu white/45%.
+7. **User profile** — card container `sidebar-surface` bg +
+   `sidebar-border` 1px. Avatar 32×32 `sidebar-accent` bg, `brand-600`
+   text, weight 700. Name 13px/600 `sidebar-accent`. Role 11px
+   `sidebar-text-dim`. Menu affordance (⋯) `sidebar-text-muted`.
 
-**Nav item (`.sb-item`)**:
+**Nav item (`.sb-item`) — default**:
 ```
 height: 36px
 padding: 0 14px
 margin: 1px 8px
 radius: 8px
 font: 13px Inter, weight 520
-color: rgba(255,255,255, 0.85)
-transition: background 150ms
-
-hover → background rgba(255,255,255, 0.08), color #FFFFFF
+color: var(--sidebar-text)          /* 85% white */
+transition: background 150ms standard
 ```
 
-**Active state**:
+**Hover**:
 ```
-background: rgba(255,255,255, 0.08) — same as hover
-color: #FFFFFF
+background: var(--sidebar-surface-hover)  /* 8% white */
+color: var(--sidebar-accent)              /* 100% white */
+```
+
+**Active** — distinct from hover (no ambiguity):
+```
+background: var(--sidebar-surface-active) /* 12% white */
+color: var(--sidebar-accent)              /* 100% white */
 font-weight: 600
-left accent bar: 3px wide, #FFFFFF, left: 0, top: 0, bottom: 0
+left accent bar: 3px, var(--sidebar-accent), top:0 bottom:0 left:0
   border-radius: 8px 0 0 8px
 ```
 
-**Dividers**: 1px `rgba(255,255,255,0.08)`, margin 6px 14px.
+**Dividers**: 1px `sidebar-border`, margin 6px 14px.
 
-**Badge** (e.g., Risk Register count):
-```
-background: #FFFFFF
-color: brand-600
-font: 10.5px, weight 600
-padding: 2px 7px
-radius: 9999px
-```
+**Badge** (e.g., Risk Register count): `sidebar-accent` bg, `brand-600`
+text, 10.5px/600, padding 2px 7px, pill-radius.
+
+### Page header — topbar replacement
+
+With no topbar, each page owns its own header as the **first content row**.
+This isolates dashboard chrome from report chrome from registry chrome,
+and lets long-form narrative pages skip it entirely and flow straight
+into a hero.
+
+**Structure** (left → right, in one flex row):
+
+- **Breadcrumb** — `Programs · Risk Register · Operational` (`body-sm`,
+  `ink-500`, `/ ` separator in `ink-300`). Collapses middle segments to `…`
+  at ≥4 items (see §10.7).
+- **Title** — `display-sm` serif for narrative pages (reports, dashboards);
+  `heading-xl` sans for registry/task/settings pages.
+- **Context chips** (optional) — period, status, owner. Flat pills:
+  `brand-50` bg + `brand-700` text, dismissible via chevron or ×.
+- **Page actions** (right-aligned) — export / filter / primary CTA. Max 3
+  visible; overflow to a `ghost` dropdown (⋯).
+
+**Size**: 72px tall on dashboards (serif title breathes), 56px on registry
+/ task pages. Sticky below `lg` when the page scrolls.
+
+**Bottom rule**: 1px `canvas-border`. Narrative pages (reports,
+AI-Concierge responses) omit the rule and flow straight into the hero.
+
+**What moved where** (topbar → new home):
+
+| Old topbar slot   | New home                                        |
+|-------------------|-------------------------------------------------|
+| Brand logo        | Sidebar logo row                                |
+| ⌘K global search  | Sidebar "Search" top action                     |
+| Notifications     | AI Concierge inbox · inline page banners        |
+| User avatar       | Sidebar user profile card (bottom)              |
+| Breadcrumbs       | Page header (first content row)                 |
+| Page title        | Page header                                     |
+| Page actions      | Page header (right-aligned)                     |
+| Context switcher  | Page header context chips OR sidebar dropdown   |
+| Density toggle    | Sidebar logo-row kebab OR per-table toolbar     |
 
 ### Report reader
 
@@ -606,8 +680,10 @@ surfaces remain perceptible against near-black.
 
 - **Sidebar** collapses to icon-only at `<lg` (1024px). Below `md` it
   becomes a drawer summoned from a menu button.
-- **Topbar** keeps the logo, ⌘K search, notifications, avatar. Everything
-  else goes to an overflow menu below `md`.
+- **Page header** (the topbar replacement) keeps breadcrumb, title, and
+  primary action above `md`. Below `md`, breadcrumb collapses to a
+  back-chevron; context chips fold into an overflow sheet opened from
+  an (⋯) icon-button.
 - **Dashboards** stack to a single column below `md`. KPI tiles go 2-per-
   row below `md`, full-width below `sm`.
 - **Tables** gain a horizontal scroll region below `lg` with the first
@@ -628,12 +704,16 @@ surfaces remain perceptible against near-black.
 
 ### Quick reference
 
-- **Default canvas**: `#FAF7F2` (light), `#12081E` (dark).
+- **App canvas** (dashboards, data, workflows): `#FCFAFD` (light), `#12081E` (dark).
+- **Report canvas** (narrative reader, PDFs): `#FAF7F2` (light), `#12081E` (dark).
+- **Sidebar** (always dark, every theme): `#26064A` (`brand-900`). Text `rgba(255,255,255,0.85)`, dim `/0.55`, muted `/0.45`. Hover bg `/0.08`, active bg `/0.12`, accent `#FFFFFF`.
+- **Page header replaces topbar**: breadcrumb → title (`display-sm` serif on narrative pages, `heading-xl` sans on task/registry) → context chips → right-aligned actions. 32px page padding.
 - **Primary button**: `background: #6A12CD; color: #FFFFFF; height: 40px; radius: 8px; font: Inter 600 15px`.
-- **Body text on light**: `color: #1F1433` (ink-800). Never pure black.
+- **Body text on canvas**: `color: #1F1433` (ink-800). Never pure black.
 - **Link**: `color: #550FA5` (brand-700), underline on hover only.
 - **Focus ring**: `0 0 0 4px rgba(106, 18, 205, 0.24)`.
-- **Card**: `background: #FFFFFF; border: 1px solid #E8E1D2; radius: 12px; padding: 24px`.
+- **Card on app canvas**: `background: #FFFFFF; border: 1px solid #F0EAF6; radius: 12px; padding: 24px`.
+- **Card on report canvas**: same geometry, border `#E8E1D2` (`paper-200`).
 - **Serif display**: `font-family: "Source Serif 4", Georgia, serif; font-weight: 420; letter-spacing: -0.02em`.
 - **Mono**: `font-family: "JetBrains Mono", "SF Mono", Consolas, monospace`.
 
@@ -665,7 +745,7 @@ Tool calls: collapsible panel below body, mono, paper-100 background.
 
 **"Build me a compliance dashboard header"**
 ```
-Section: py-32 px-32, paper-50 canvas.
+Section: py-32 px-32, canvas (#FCFAFD).
 Left column:
   label (uppercase caption): "Q1 2026 · Operational Risk".
   display-xl serif title: "Operational Risk Assessment".
@@ -1038,4 +1118,4 @@ document wins until explicitly amended.
 Format inspired by the `getdesign.md` 9-section convention. Tuned for
 GRC SaaS; assumes React 19 + Tailwind v4 + shadcn/ui + Radix primitives.
 
-_Last refined: 2026-04-21._
+_Last refined: 2026-04-23 — dark sidebar + cool canvas app shell; paper tokens re-roled for report surfaces._

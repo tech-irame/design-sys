@@ -9,17 +9,20 @@ matches the system — no memorizing, no drift, no style policing in PR.
 
 ```
 design-sys/
-├── SKILL.md           ← Claude Code skill entry (activates on UI/GRC requests)
-├── DESIGN.md          ← canonical 10-section spec (the source of truth)
-├── preview.html       ← light-mode visual reference (open in a browser)
-├── preview-dark.html  ← dark-mode visual reference
-└── README.md          ← you are here
+├── SKILL.md                       ← Claude Code skill entry (activates on UI/GRC requests)
+├── DESIGN.md                      ← canonical 10-section spec (the source of truth)
+├── preview.html                   ← light-mode visual reference (open in a browser)
+├── preview-dark.html              ← dark-mode visual reference
+├── assets/dashboard-preview.png   ← screenshot of the app-shell composition
+└── README.md                      ← you are here
 ```
 
 The design language in one line:
 **Editorial premium in a domain that's been corporate for too long.**
-Warm `#FAF7F2` paper canvas, `Source Serif 4` display as character,
-`#6A12CD` purple as signature, 8pt grid, flat pills, Claude/Anthropic tone.
+Dark `#26064A` sidebar anchors every screen, cool `#FCFAFD` canvas
+carries the working app, warm `#FAF7F2` paper is reserved for long-form
+reports. `Source Serif 4` display as character, `#6A12CD` purple as
+signature. 8pt grid, flat pills, Claude/Anthropic tone.
 
 ## Install as a Claude Code skill
 
@@ -96,25 +99,28 @@ Claude Code matches the request against the skill's `description` field,
 loads `SKILL.md`, and generates UI using `brand-600`, `Source Serif 4`,
 flat pills, 8pt grid — without being re-taught the system.
 
-## Dashboard Preview
+## App shell at a glance
 
-The design system in action — a full dashboard screen showing the sidebar,
-hero, KPI cards, workflow section, and library grid working together.
+Open [`preview.html`](./preview.html) for the live light-mode reference
+(and [`preview-dark.html`](./preview-dark.html) for dark). The first
+section of each preview is a full app-shell demo — dark sidebar,
+cool/deep canvas, page header, and KPI cards rendered from the same
+tokens your code will consume.
 
-![Dashboard Preview](https://raw.githubusercontent.com/1-fish-chapaak/design-sys/design-sys-updates/assets/dashboard-preview.png)
+![Dashboard Preview](./assets/dashboard-preview.png)
 
 **What you see:**
 
 | Surface | Spec |
 |---------|------|
-| Sidebar | Dark `brand-900` (#26064A), 256px, white text with opacity hierarchy |
-| Active nav | 8% white bg + 3px white left bar + white text (weight 600) |
-| Canvas | `#FCFAFD` — brand-600 at ~2% over white |
-| Hero | White-to-lavender gradient, Source Serif 4 display heading, wave decoration |
+| Sidebar | Dark `brand-900` (#26064A), 256px, white-opacity text scale (`0.85` / `0.55` / `0.45`) |
+| Hover vs. active nav | Hover = 8% white bg; **active = 12% white bg** (distinct signal) + 3px white left bar + weight-600 |
+| Canvas | `#FCFAFD` — brand-600 at ~2% over white, 32px page padding (8pt grid) |
+| Page header (no topbar) | Breadcrumb → Source Serif 4 title → context chips → right-aligned actions |
 | KPI cards | Source Serif 4 tabular numerics, `brand-600` bottom border on active card |
-| Cards | `paper-0` white, `#F0EAF6` subtle border, 12px radius |
+| Cards | `canvas-elevated` (white), `canvas-border` #F0EAF6 border, 12px radius |
 | Pills | Flat — `brand-50` bg, `brand-700` text, no border, no icon |
-| Typography | Inter for UI (13px/520), Source Serif 4 for display (38-44px) |
+| Typography | Inter for UI (13px/520), Source Serif 4 for display (34-44px) |
 
 ### Sidebar structure
 
@@ -199,4 +205,4 @@ Distribution to external teams requires explicit permission.
 
 ---
 
-_Last refined: 2026-04-21 · maintainer: @1-fish-chapaak_
+_Last refined: 2026-04-23 · dark sidebar + cool canvas shell · maintainer: @1-fish-chapaak_
