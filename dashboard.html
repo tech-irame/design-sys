@@ -1,0 +1,724 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Irame.ai — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,300..900&family=Inter:ital,wght@0,300..700;1,300..700&family=JetBrains+Mono:wght@400..700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    button { font-family: inherit; cursor: pointer; border: none; background: none; }
+    a { text-decoration: none; color: inherit; }
+
+    /* ── TOKENS ────────────────────────────────────────────── */
+    :root {
+      --brand-50:  #F7F0FF;
+      --brand-100: #EDDEFE;
+      --brand-200: #DCBBFD;
+      --brand-300: #C393FA;
+      --brand-400: #A366F0;
+      --brand-500: #8838DE;
+      --brand-600: #6A12CD;
+      --brand-700: #550FA5;
+      --brand-800: #3B0B72;
+      --brand-900: #26064A;
+      --brand-950: #170330;
+
+      --paper-0:   #FFFFFF;
+      --paper-50:  #FAF7F2;
+      --paper-100: #F3EEE5;
+      --paper-200: #E8E1D2;
+      --paper-300: #D6CCB7;
+
+      --ink-300: #C2B9CB;
+      --ink-400: #9A8FAE;
+      --ink-500: #6B5D82;
+      --ink-600: #4A3D62;
+      --ink-700: #332848;
+      --ink-800: #1F1433;
+      --ink-900: #0F0720;
+
+      --risk:         #B42318;
+      --compliant:    #15803D;
+      --mitigated:    #B45309;
+
+      --glow-brand: 0 0 0 4px rgba(106,18,205,0.22);
+
+      --r-xs:   4px;
+      --r-sm:   6px;
+      --r-md:   8px;
+      --r-lg:   12px;
+      --r-xl:   16px;
+      --r-full: 9999px;
+
+      /* canvas: #6A12CD at ~2% over white — barely there */
+      --canvas: #FCFAFD;
+      /* sidebar: dark brand-900 — matches theme */
+      --sidebar-bg: var(--brand-900);
+      --sidebar-border: rgba(255,255,255,0.08);
+      /* cards: very subtle border — not heavy */
+      --card-border: #F0EAF6;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 16px;
+      background: var(--canvas);
+      color: var(--ink-800);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .shell { display: flex; height: 100vh; overflow: hidden; }
+
+    /* ══════════════════════════════════════════════════════════
+       SIDEBAR — light, clean, holds everything
+    ══════════════════════════════════════════════════════════ */
+    .sidebar {
+      width: 256px;
+      flex-shrink: 0;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--sidebar-border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Logo row ──────────────────────────────────────────── */
+    .sb-logo {
+      display: flex; align-items: center; gap: 12px;
+      padding: 18px 16px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      flex-shrink: 0;
+    }
+    .sb-logo-icon {
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--brand-500), var(--brand-400));
+      color: #FFFFFF;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 2px 6px rgba(106,18,205,0.3);
+    }
+    .sb-logo-icon svg { width: 15px; height: 15px; }
+    .sb-logo-text { flex: 1; min-width: 0; }
+    .sb-logo-name {
+      font-size: 15px; font-weight: 700; color: #FFFFFF;
+      letter-spacing: -0.01em;
+    }
+    .sb-logo-sub {
+      font-size: 10.5px; font-weight: 500; color: rgba(255,255,255,0.7);
+      letter-spacing: 0.02em; margin-top: 1px;
+    }
+    .sb-logo-right {
+      display: flex; align-items: center; gap: 4px;
+    }
+
+    /* ── Small icon buttons (notification, etc.) ───────────── */
+    .sb-icon-btn {
+      width: 30px; height: 30px;
+      border-radius: var(--r-md);
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,0.7); position: relative;
+      cursor: pointer; transition: background 150ms, color 150ms;
+    }
+    .sb-icon-btn:hover { background: rgba(255,255,255,0.1); color: #FFFFFF; }
+    .sb-icon-btn svg { width: 16px; height: 16px; }
+    .sb-notif-dot {
+      position: absolute; top: 5px; right: 5px;
+      width: 6px; height: 6px;
+      background: var(--risk);
+      border-radius: var(--r-full);
+      border: 1.5px solid var(--brand-900);
+    }
+    .sb-avatar {
+      width: 28px; height: 28px;
+      border-radius: var(--r-full);
+      background: var(--brand-600);
+      color: var(--paper-0);
+      font-size: 10.5px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; flex-shrink: 0;
+    }
+
+    /* search is now a flat nav-style item */
+
+    /* ── New Engagement CTA ────────────────────────────────── */
+    .sb-cta {
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      margin: 8px 12px 4px;
+      height: 36px; padding: 0 12px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: var(--r-md);
+      font-size: 13px; font-weight: 600;
+      color: #FFFFFF;
+      transition: background 150ms, border-color 150ms;
+    }
+    .sb-cta:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.22); }
+    .sb-cta:active { background: rgba(255,255,255,0.18); }
+    .sb-cta svg { width: 14px; height: 14px; }
+
+    /* ── Engagement chip ───────────────────────────────────── */
+    .sb-engage {
+      display: flex; align-items: center; gap: 8px;
+      margin: 4px 10px 2px;
+      padding: 8px 10px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--r-md);
+      cursor: pointer; transition: background 150ms;
+    }
+    .sb-engage:hover { background: rgba(255,255,255,0.12); }
+    .sb-engage-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ADE80; flex-shrink: 0; }
+    .sb-engage-body { flex: 1; min-width: 0; }
+    .sb-engage-name { font-size: 12px; font-weight: 560; color: #FFFFFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sb-engage-meta { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 1px; }
+    .sb-engage-arrow { color: rgba(255,255,255,0.4); }
+    .sb-engage-arrow svg { width: 12px; height: 12px; }
+
+    /* ── Nav ────────────────────────────────────────────────── */
+    .sb-nav { flex: 1; overflow-y: auto; padding: 6px 0 12px; }
+    .sb-nav::-webkit-scrollbar { width: 3px; }
+    .sb-nav::-webkit-scrollbar-thumb { background: var(--brand-200); border-radius: 2px; }
+
+    .sb-item {
+      display: flex; align-items: center; gap: 10px;
+      height: 36px; padding: 0 14px;
+      font-size: 13px; font-weight: 520;
+      color: rgba(255,255,255,0.85);
+      border-radius: var(--r-md);
+      margin: 1px 8px;
+      cursor: pointer; position: relative;
+      transition: background 150ms, color 150ms;
+    }
+    .sb-item:hover { background: rgba(255,255,255,0.08); color: #FFFFFF; }
+    .sb-item.active {
+      background: rgba(255,255,255,0.08);
+      color: #FFFFFF;
+      font-weight: 600;
+    }
+    .sb-item.active::before {
+      content: '';
+      position: absolute; left: 0; top: 0; bottom: 0;
+      width: 3px; background: #FFFFFF;
+      border-radius: 8px 0 0 8px;
+    }
+    .sb-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .sb-item-badge {
+      margin-left: auto;
+      font-size: 10.5px; font-weight: 600;
+      background: rgba(255,255,255,0.12); color: #FFFFFF;
+      padding: 1px 6px; border-radius: var(--r-full);
+    }
+
+    .sb-divider { height: 1px; background: rgba(255,255,255,0.08); margin: 6px 14px; }
+
+    .sb-section {
+      padding: 8px 16px 3px;
+      font-size: 10px; font-weight: 560;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: rgba(255,255,255,0.55);
+    }
+
+    .sb-recent {
+      display: flex; align-items: center; gap: 8px;
+      height: 30px; padding: 0 14px;
+      font-size: 12.5px; color: rgba(255,255,255,0.5);
+      margin: 1px 8px; border-radius: var(--r-md);
+      cursor: pointer; transition: background 150ms, color 150ms;
+    }
+    .sb-recent:hover { background: rgba(255,255,255,0.08); color: #FFFFFF; }
+    .sb-recent svg { width: 13px; height: 13px; flex-shrink: 0; }
+    .sb-recent-label { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .sb-recent-more {
+      opacity: 0; width: 18px; height: 18px; border-radius: var(--r-xs);
+      display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,0.4); transition: opacity 150ms;
+    }
+    .sb-recent:hover .sb-recent-more { opacity: 1; }
+    .sb-recent-more svg { width: 11px; height: 11px; }
+
+    .sb-sub-recent {
+      display: flex; align-items: center; gap: 8px;
+      height: 28px; padding: 0 14px 0 32px;
+      font-size: 12px; color: rgba(255,255,255,0.7);
+      margin: 1px 8px; border-radius: var(--r-md);
+      cursor: pointer; transition: background 150ms, color 150ms;
+    }
+    .sb-sub-recent:hover { background: rgba(255,255,255,0.08); color: #FFFFFF; }
+    .sb-sub-recent svg { width: 12px; height: 12px; flex-shrink: 0; }
+    .sb-sub-label { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+    /* ── Footer ────────────────────────────────────────────── */
+    .sb-footer {
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding: 8px 10px; flex-shrink: 0;
+    }
+    .sb-user {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: var(--r-md);
+      cursor: pointer; transition: background 150ms;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .sb-user:hover { background: rgba(255,255,255,0.10); }
+    .sb-user-avatar {
+      width: 32px; height: 32px; border-radius: var(--r-full);
+      background: #FFFFFF; color: var(--brand-600);
+      font-size: 12px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .sb-user-info { flex: 1; min-width: 0; }
+    .sb-user-name { font-size: 13px; font-weight: 600; color: #FFFFFF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sb-user-role { font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 1px; }
+    .sb-user-more { color: rgba(255,255,255,0.45); }
+    .sb-user-more svg { width: 14px; height: 14px; }
+
+    .sb-collapse {
+      display: none;
+    }
+    .sb-collapse svg { width: 13px; height: 13px; }
+
+    /* ══════════════════════════════════════════════════════════
+       MAIN — no header, direct to content
+    ══════════════════════════════════════════════════════════ */
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    .page {
+      flex: 1; overflow-y: auto;
+      padding: 24px 28px;
+      display: flex; flex-direction: column; gap: 20px;
+      background: var(--canvas);
+      min-height: 0;
+    }
+    .page::-webkit-scrollbar { width: 5px; }
+    .page::-webkit-scrollbar-thumb { background: var(--brand-200); border-radius: 3px; }
+    .page::after { content: ''; flex: 1; }
+
+    /* ══════════════════════════════════════════════════════════
+       HERO
+    ══════════════════════════════════════════════════════════ */
+    .hero {
+      background: linear-gradient(135deg, #FFFFFF 0%, #F7F0FF 40%, #EDDEFE 100%);
+      border: 1px solid var(--brand-200);
+      border-radius: var(--r-xl);
+      padding: 44px 52px;
+      display: flex; align-items: center; justify-content: space-between;
+      overflow: hidden; position: relative; min-height: 188px;
+    }
+    .hero-body { position: relative; z-index: 1; }
+    .hero-eyebrow {
+      font-size: 10.5px; font-weight: 560;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--brand-600); margin-bottom: 8px;
+    }
+    .hero-title {
+      font-family: 'Source Serif 4', Georgia, serif;
+      font-size: 38px; line-height: 46px;
+      letter-spacing: -0.02em; font-weight: 440;
+      color: var(--ink-900); margin-bottom: 6px;
+    }
+    .hero-sub {
+      font-size: 14px; line-height: 22px;
+      color: var(--ink-500); margin-bottom: 28px;
+    }
+    .hero-deco {
+      position: absolute; right: 0; top: 0; bottom: 0;
+      width: 460px; pointer-events: none; overflow: hidden;
+    }
+    .hero-deco svg {
+      position: absolute; right: -20px; top: 50%;
+      transform: translateY(-50%); width: 500px; height: 240px;
+    }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      height: 40px; padding: 0 20px;
+      background: var(--brand-600); color: var(--paper-0);
+      font-size: 14px; font-weight: 600;
+      border-radius: var(--r-md); border: none;
+      transition: background 150ms;
+    }
+    .btn-primary:hover { background: var(--brand-500); }
+    .btn-primary:active { background: var(--brand-800); }
+    .btn-primary:focus-visible { outline: none; box-shadow: var(--glow-brand); }
+    .btn-primary svg { width: 15px; height: 15px; }
+
+    /* ══════════════════════════════════════════════════════════
+       SECTION HEADER / SELECT
+    ══════════════════════════════════════════════════════════ */
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .section-label { font-size: 10.5px; font-weight: 560; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-500); }
+    .select-sm {
+      display: flex; align-items: center; gap: 6px;
+      height: 30px; padding: 0 10px;
+      background: var(--paper-0); border: 1px solid var(--card-border);
+      border-radius: var(--r-md); font-size: 12.5px; font-weight: 520;
+      color: var(--ink-700); cursor: pointer;
+    }
+    .select-sm:hover { border-color: var(--brand-200); }
+    .select-sm svg { width: 13px; height: 13px; color: var(--ink-400); }
+
+    /* ══════════════════════════════════════════════════════════
+       KPI GRID
+    ══════════════════════════════════════════════════════════ */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .kpi-card { background: var(--paper-0); border: 1px solid var(--card-border); border-radius: var(--r-lg); padding: 20px 22px 16px; }
+    .kpi-card--active { border-bottom: 2px solid var(--brand-600); }
+    .kpi-label { font-size: 10.5px; font-weight: 560; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-500); margin-bottom: 3px; }
+    .kpi-sublabel { font-size: 11.5px; color: var(--ink-400); margin-bottom: 12px; line-height: 17px; }
+    .kpi-value {
+      font-family: 'Source Serif 4', Georgia, serif;
+      font-size: 44px; line-height: 50px; letter-spacing: -0.025em;
+      font-weight: 380; color: var(--ink-900);
+      font-variant-numeric: tabular-nums; margin-bottom: 10px;
+    }
+    .kpi-footer { display: flex; align-items: center; justify-content: space-between; }
+    .kpi-trend { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 520; font-variant-numeric: tabular-nums; }
+    .kpi-trend.up   { color: var(--compliant); }
+    .kpi-trend.down { color: var(--risk); }
+    .kpi-trend svg  { width: 12px; height: 12px; }
+    .kpi-trend-meta { font-size: 11px; opacity: 0.75; margin-left: 2px; }
+    .kpi-icon { color: var(--brand-200); }
+    .kpi-icon svg { width: 22px; height: 22px; }
+    .live-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 560; color: var(--compliant); }
+    .live-dot { width: 6px; height: 6px; background: var(--compliant); border-radius: 50%; }
+
+    /* ══════════════════════════════════════════════════════════
+       CARD / SEGMENTED / WORKFLOW
+    ══════════════════════════════════════════════════════════ */
+    .card { background: var(--paper-0); border: 1px solid var(--card-border); border-radius: var(--r-lg); overflow: hidden; }
+    .card-head { display: flex; align-items: flex-start; justify-content: space-between; padding: 20px 22px 0; }
+    .card-title { font-size: 15px; font-weight: 600; color: var(--ink-800); margin-bottom: 3px; }
+    .card-sub { font-size: 12.5px; color: var(--ink-500); line-height: 18px; }
+    .nav-btns { display: flex; gap: 4px; }
+    .nav-btn {
+      width: 30px; height: 30px; border-radius: var(--r-md);
+      border: 1px solid var(--card-border); background: var(--paper-0);
+      color: var(--ink-500); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .nav-btn:hover { background: var(--brand-50); border-color: var(--brand-200); }
+    .nav-btn svg { width: 13px; height: 13px; }
+
+    .seg-ctrl {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      margin: 14px 22px; padding: 2px;
+      background: var(--canvas); border: 1px solid var(--card-border);
+      border-radius: var(--r-md); gap: 2px;
+    }
+    .seg-item {
+      padding: 7px 10px; text-align: center;
+      font-size: 12.5px; font-weight: 520; color: var(--ink-400);
+      cursor: pointer; border-radius: var(--r-sm);
+      font-variant-numeric: tabular-nums;
+      transition: background 150ms, color 150ms;
+    }
+    .seg-item.active {
+      background: var(--paper-0); color: var(--ink-900); font-weight: 600;
+      box-shadow: 0 1px 2px rgba(106,18,205,0.08);
+    }
+    .seg-item:hover:not(.active) { background: var(--brand-100); color: var(--ink-700); }
+
+    .wf-grid { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--card-border); }
+    .wf-card { padding: 20px 20px 20px 22px; border-right: 1px solid var(--card-border); cursor: pointer; transition: background 150ms; }
+    .wf-card:last-child { border-right: none; }
+    .wf-card:hover { background: var(--brand-50); }
+    .wf-icon { width: 34px; height: 34px; border-radius: var(--r-md); background: var(--brand-50); color: var(--brand-600); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+    .wf-icon svg { width: 17px; height: 17px; }
+    .wf-title { font-size: 13.5px; font-weight: 600; color: var(--ink-800); margin-bottom: 5px; line-height: 20px; }
+    .wf-desc { font-size: 12px; color: var(--ink-500); line-height: 18px; margin-bottom: 12px; }
+    .wf-footer { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+
+    .pill {
+      display: inline-flex; align-items: center; height: 20px; padding: 0 8px;
+      border-radius: var(--r-full); font-size: 11px; font-weight: 560;
+      background: var(--brand-50); color: var(--brand-700); border: none;
+    }
+    .wf-date { font-size: 11px; color: var(--ink-400); font-variant-numeric: tabular-nums; }
+
+    .link-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 12.5px; font-weight: 560; color: var(--brand-700);
+      cursor: pointer; white-space: nowrap;
+    }
+    .link-btn:hover { color: var(--brand-600); text-decoration: underline; }
+    .link-btn svg { width: 13px; height: 13px; }
+
+    .bottom-grid { display: grid; grid-template-columns: 1fr 288px; gap: 16px; }
+
+    .pill-tabs { display: flex; align-items: center; gap: 2px; padding: 12px 20px; border-bottom: 1px solid var(--card-border); }
+    .pill-tab { padding: 5px 12px; border-radius: var(--r-sm); font-size: 12.5px; font-weight: 520; color: var(--ink-400); cursor: pointer; }
+    .pill-tab.active { background: var(--paper-0); border: 1px solid var(--card-border); color: var(--ink-800); font-weight: 560; box-shadow: 0 1px 2px rgba(106,18,205,0.06); }
+    .pill-tab:hover:not(.active) { color: var(--ink-600); background: var(--brand-50); }
+
+    .lib-card-head { display: flex; align-items: center; justify-content: space-between; padding: 20px 22px 0; }
+    .lib-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
+    .lib-item { padding: 18px 18px 18px 22px; border-right: 1px solid var(--card-border); cursor: pointer; transition: background 150ms; }
+    .lib-item:last-child { border-right: none; }
+    .lib-item:hover { background: var(--brand-50); }
+    .lib-icon { width: 30px; height: 30px; border-radius: var(--r-md); background: var(--brand-50); color: var(--brand-600); display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
+    .lib-icon svg { width: 15px; height: 15px; }
+    .lib-title { font-size: 13px; font-weight: 600; color: var(--ink-800); margin-bottom: 3px; line-height: 19px; }
+    .lib-desc { font-size: 12px; color: var(--ink-500); line-height: 18px; margin-bottom: 10px; }
+
+    .onboarding { background: var(--paper-0); border: 1px solid var(--card-border); border-radius: var(--r-lg); padding: 24px; display: flex; flex-direction: column; }
+    .onboarding-title { font-size: 15px; font-weight: 600; color: var(--ink-800); margin-bottom: 4px; }
+    .onboarding-sub { font-size: 12.5px; color: var(--ink-500); line-height: 19px; margin-bottom: 20px; }
+    .onboarding-illo { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 120px; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ════════ SIDEBAR ════════ -->
+  <aside class="sidebar">
+
+    <!-- Logo + notification + avatar — all in sidebar now -->
+    <div class="sb-logo">
+      <div class="sb-logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <!-- Shield (audit/GRC) -->
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <!-- AI sparkle inside -->
+          <path d="M12 8v4m0 0v2m0-2h-2m2 0h2" stroke-width="2.2"/>
+        </svg>
+      </div>
+      <div class="sb-logo-text">
+        <div class="sb-logo-name">IRAME.AI</div>
+        <div class="sb-logo-sub" style="display:flex;align-items:center;gap:3px;">Audit Intelligence <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px;opacity:0.6;"><polyline points="6 9 12 15 18 9"/></svg></div>
+      </div>
+    </div>
+
+    <!-- Nav -->
+    <nav class="sb-nav">
+
+      <a class="sb-item" style="margin-top:4px;font-size:12px;color:#FFFFFF;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Ask IRA
+      </a>
+      <a class="sb-item" style="font-size:12px;color:#FFFFFF;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Search
+      </a>
+      <a class="sb-item active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Home
+      </a>
+
+      <a class="sb-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Recents
+      </a>
+
+      <div class="sb-divider" style="margin-top:4px;"></div>
+
+      <!-- Programs group -->
+      <div class="sb-section">Programs</div>
+      <a class="sb-item" >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Planning
+      </a>
+      <a class="sb-item" >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        Process Hub
+      </a>
+      <a class="sb-item" >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Risk Register
+        <span style="margin-left:auto;font-size:10.5px;font-weight:600;color:var(--brand-600);background:#FFFFFF;padding:2px 7px;border-radius:9999px;">14</span>
+      </a>
+      <a class="sb-item" >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Control Library
+      </a>
+
+      <div class="sb-divider" style="margin-top:6px;"></div>
+
+      <a class="sb-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </a>
+      <a class="sb-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Report
+      </a>
+      <a class="sb-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg>
+        Workflow Library
+      </a>
+      <a class="sb-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        AI Concierge
+      </a>
+
+      <div class="sb-divider" style="margin-top:6px;"></div>
+
+      <a class="sb-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+        Configuration
+      </a>
+      <a class="sb-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Admin
+      </a>
+
+    </nav>
+
+    <!-- Footer -->
+    <div class="sb-footer">
+      <div class="sb-user">
+        <div class="sb-user-avatar">JD</div>
+        <div class="sb-user-info">
+          <div class="sb-user-name">John Doe</div>
+          <div class="sb-user-role">Lead Auditor</div>
+        </div>
+        <div class="sb-user-more"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></div>
+      </div>
+      <div class="sb-collapse">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="11 17 6 12 11 7"/><polyline points="18 17 13 12 18 7"/></svg>
+        Collapse
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ════════ MAIN ════════ -->
+  <div class="main">
+    <div class="page">
+
+      <!-- HERO -->
+      <div class="hero">
+        <div class="hero-body">
+          <div class="hero-eyebrow">Audit Intelligence</div>
+          <h1 class="hero-title">Hello, Abhinav.</h1>
+          <p class="hero-sub">Ready to automate your next audit?</p>
+          <button class="btn-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Start New Chat
+          </button>
+        </div>
+        <div class="hero-deco">
+          <svg viewBox="0 0 500 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M-10 200 Q80 80 180 150 Q280 220 370 90 Q440 10 510 70"   stroke="#C393FA" stroke-width="2"   fill="none" opacity="0.9"/>
+            <path d="M-10 180 Q90 60 190 130 Q290 200 380 70 Q450-10 510 50"   stroke="#A366F0" stroke-width="1.8" fill="none" opacity="0.7"/>
+            <path d="M-10 220 Q70 100 170 170 Q270 240 360 110 Q430 30 510 90"  stroke="#DCBBFD" stroke-width="1.5" fill="none" opacity="0.8"/>
+            <path d="M-10 160 Q100 40 200 110 Q300 180 390 50 Q460-20 510 30"  stroke="#8838DE" stroke-width="1.4" fill="none" opacity="0.5"/>
+            <path d="M-10 140 Q110 20 210 90 Q310 160 400 30 Q470-40 510 10"   stroke="#C393FA" stroke-width="1.2" fill="none" opacity="0.55"/>
+            <path d="M50 240 Q150 120 250 190 Q350 260 430 130 Q480 60 510 80"  stroke="#A366F0" stroke-width="1.3" fill="none" opacity="0.5"/>
+            <path d="M110 240 Q210 120 310 190 Q410 260 480 130 Q500 80 510 60" stroke="#DCBBFD" stroke-width="1"   fill="none" opacity="0.65"/>
+            <path d="M-10 120 Q120 0 220 70 Q320 140 410 10 Q475-55 510 0"     stroke="#6A12CD" stroke-width="1.2" fill="none" opacity="0.3"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- DASHBOARD KPIs -->
+      <div>
+        <div class="section-header">
+          <span class="section-label">Dashboard</span>
+          <div class="select-sm">Last 30 days <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+        </div>
+        <div class="kpi-grid">
+          <div class="kpi-card kpi-card--active">
+            <div class="kpi-label">Workflows</div><div class="kpi-sublabel">Total executed in last 30 days</div>
+            <div class="kpi-value">279</div>
+            <div class="kpi-footer"><div class="live-badge"><div class="live-dot"></div>Live status</div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg></div></div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Queries</div><div class="kpi-sublabel">Total queries in last 30 days</div>
+            <div class="kpi-value">2103</div>
+            <div class="kpi-footer"><div class="kpi-trend up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>21%<span class="kpi-trend-meta">vs last month</span></div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div></div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Reports</div><div class="kpi-sublabel">Updated in last 30 days</div>
+            <div class="kpi-value">21</div>
+            <div class="kpi-footer"><div class="kpi-trend down"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>2%<span class="kpi-trend-meta">vs last month</span></div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div></div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Business Process</div><div class="kpi-sublabel">Created in last 30 days</div>
+            <div class="kpi-value">4</div>
+            <div class="kpi-footer"><div class="kpi-trend up"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>21%<span class="kpi-trend-meta">vs last month</span></div><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WORKFLOWS EXECUTION STATUS -->
+      <div class="card">
+        <div class="card-head">
+          <div><div class="card-title">Workflows Execution Status</div><div class="card-sub">Take a quick glance at your workflows execution status.</div></div>
+          <div class="nav-btns">
+            <button class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+            <button class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
+          </div>
+        </div>
+        <div class="seg-ctrl">
+          <div class="seg-item active">Planned Workflows: 6</div>
+          <div class="seg-item">Pending Workflows: 0</div>
+          <div class="seg-item">Exceptions Raised: 6</div>
+        </div>
+        <div class="wf-grid">
+          <div class="wf-card">
+            <div class="wf-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 1 7 7c0 3.07-1.95 5.7-4.7 6.71L14 17H10l-.3-1.29A7 7 0 0 1 5 9a7 7 0 0 1 7-7z"/><path d="M9 21h6"/><path d="M9 17h6"/></svg></div>
+            <div class="wf-title">Recommendation Engine</div><div class="wf-desc">Enhance customer experiences with recommendations.</div>
+            <div class="wf-footer"><span class="pill">Revenue</span><span class="pill">P2P</span><span class="wf-date">2 Sep 2025</span></div>
+          </div>
+          <div class="wf-card">
+            <div class="wf-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+            <div class="wf-title">Fraud Prevention</div><div class="wf-desc">Use advanced pattern recognition to detect and prevent fraud activities.</div>
+            <div class="wf-footer"><span class="pill">Fraud</span><span class="pill">B2C</span><span class="wf-date">14 Sep 2025</span></div>
+          </div>
+          <div class="wf-card">
+            <div class="wf-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
+            <div class="wf-title">Supply Chain Management</div><div class="wf-desc">Optimize operations with predictive analytics and real-time insights.</div>
+            <div class="wf-footer"><span class="pill">Business</span><span class="pill">B2B</span><span class="wf-date">2 Sep 2025</span></div>
+          </div>
+          <div class="wf-card">
+            <div class="wf-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><line x1="12" y1="7" x2="5" y2="17"/><line x1="12" y1="7" x2="19" y2="17"/></svg></div>
+            <div class="wf-title">Supply Chain Management</div><div class="wf-desc">Optimize operations with predictive analytics and real-time insights.</div>
+            <div class="wf-footer"><span class="pill">Business</span><span class="pill">B2B</span><span class="wf-date">5 Dec 2025</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- START FROM SCRATCH -->
+      <div>
+        <div class="section-header"><span class="section-label">Start from Scratch</span></div>
+        <div class="bottom-grid">
+          <div class="card">
+            <div class="lib-card-head">
+              <div><div class="card-title">Workflow Library</div><div class="card-sub">Automate audit processes in just a few clicks.</div></div>
+              <a class="link-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>View Workflow Library</a>
+            </div>
+            <div class="pill-tabs"><div class="pill-tab active">Featured</div><div class="pill-tab">Recommended</div><div class="pill-tab">Most Popular</div></div>
+            <div class="lib-grid">
+              <div class="lib-item"><div class="lib-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div><div class="lib-title">Supply Chain Management</div><div class="lib-desc">Optimize operations with predictive analytics and real-time insights.</div><div class="wf-footer"><span class="pill">Business</span><span class="pill">B2B</span></div></div>
+              <div class="lib-item"><div class="lib-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div class="lib-title">Fraud Prevention</div><div class="lib-desc">Use advanced pattern recognition to detect and prevent fraudulent activities.</div><div class="wf-footer"><span class="pill">Fraud</span><span class="pill">B2C</span></div></div>
+              <div class="lib-item"><div class="lib-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a7 7 0 0 1 7 7c0 3.07-1.95 5.7-4.7 6.71L14 17H10l-.3-1.29A7 7 0 0 1 5 9a7 7 0 0 1 7-7z"/><path d="M9 21h6"/><path d="M9 17h6"/></svg></div><div class="lib-title">Recommendation Engine</div><div class="lib-desc">Enhance customer experiences with recommendations.</div><div class="wf-footer"><span class="pill">Revenue</span><span class="pill">P2P</span></div></div>
+            </div>
+          </div>
+          <div class="onboarding">
+            <div class="onboarding-title">Get Started With Irame</div>
+            <div class="onboarding-sub">We'll guide you through the necessary steps to get things up and running.</div>
+            <div class="onboarding-illo">
+              <svg width="160" height="130" viewBox="0 0 160 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="18" y="62" width="58" height="13" rx="3" fill="#EDDEFE"/><rect x="18" y="77" width="58" height="13" rx="3" fill="#DCBBFD"/><rect x="18" y="92" width="58" height="13" rx="3" fill="#C393FA" opacity="0.6"/>
+                <circle cx="69" cy="68" r="3" fill="#6A12CD" opacity="0.7"/><circle cx="69" cy="83" r="3" fill="#6A12CD" opacity="0.45"/><circle cx="69" cy="98" r="3" fill="#6A12CD" opacity="0.25"/>
+                <ellipse cx="118" cy="76" rx="18" ry="26" fill="#F7F0FF"/><circle cx="118" cy="52" r="10" fill="#DCBBFD"/>
+                <circle cx="110" cy="86" r="13" fill="none" stroke="#550FA5" stroke-width="2.2" opacity="0.6"/><line x1="119" y1="95" x2="130" y2="106" stroke="#550FA5" stroke-width="2.2" stroke-linecap="round" opacity="0.6"/>
+                <rect x="28" y="18" width="32" height="30" rx="6" fill="#F7F0FF" stroke="#C393FA" stroke-width="1"/><text x="44" y="38" font-family="Inter,sans-serif" font-size="16" font-weight="600" fill="#6A12CD" text-anchor="middle">%</text>
+                <line x1="60" y1="38" x2="90" y2="60" stroke="#A366F0" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+              </svg>
+            </div>
+            <button class="btn-primary" style="width:100%;justify-content:center;">Get Started</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>
