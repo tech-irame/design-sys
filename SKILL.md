@@ -273,6 +273,105 @@ shadow `shadow-xl`. Overlay `ink-900/40` + 4px backdrop-blur.
 
 ---
 
+## GRC domain patterns (cheat sheet — full spec in DESIGN.md §§11–16)
+
+### App-shell contract
+
+- **⌘K is the only global search.** Two sections: pages + entities,
+  always with "Ask IRA" as the last row. No second search input anywhere.
+- **Workspace selector** sits at the top of the sidebar. Switching is a
+  hard route change — never swap data in place.
+- **Filter bar contract** — every list page has: search + status chips +
+  date range + owner + severity + advanced-slide-over + view/density
+  toggles. State persists to URL query-string.
+- **Notifications** — toasts for ephemeral, inbox for durable.
+  Never mix.
+- **RBAC** — hide features a role can't see; disable with a tooltip
+  when visible-but-not-allowed. External auditors get the read-only
+  shell.
+- **Audit trail drawer** on every detail page. Vertical timeline with
+  before/after diffs; CSV export.
+
+### AI / IRA signature patterns
+
+- **Three-panel chat** (`/chat`): History 280 | Conversation flex |
+  Artifacts 420–520. History is **inside** the page, never replaces
+  the app sidebar.
+- **Artifacts** has fixed tabs in pipeline order: `Plan` · `Code` ·
+  `Sources` · `Result`. Only show tabs that have content.
+- **Clarification** is inline chips — never a modal. Chips are
+  secondary-variant `sm` buttons, `r-full`, click auto-sends.
+- **Assumptions** surface above artifact tabs in a `brand-50` editable
+  panel when IRA made inferences without asking.
+- **Progressive loader**: one named row per pipeline step, dots →
+  checkmarks → collapsed meta line.
+- **Workflow builder canvas**: same 3-panel layout, but right panel is
+  a read-only preview. User edits only via natural language in chat.
+
+### Domain surfaces (IA)
+
+```
+HOME · IRA AI ·
+GOVERNANCE (Processes · RACM · Controls · Risks · Planning) ·
+EXECUTION (Engagements · Testing · Evidence · Findings) ·
+WORKFLOWS ·
+INTELLIGENCE (Dashboards · Reports · AI Concierge) ·
+SYSTEM (Configuration · Admin)
+```
+
+Pattern notes:
+- **Home** is action-oriented. Lead with an action queue row; KPI band;
+  engagement Gantt; risk heatmap. No promotional content.
+- **Governance** surfaces are registries (list + detail with tabs).
+  Business Processes own 4 tabs exactly: SOP · RACM · Workflows · Risks.
+- **RACM** is a specialized matrix, not a table. Redundant encoding
+  (color + glyph). Never edit in-cell.
+- **Risk heatmap** — 5×5 diverging scale, always carries count text.
+- **Audit Planning v1** = Gantt only. Resources/budget deferred.
+- **Engagements** run through 5 phases: Planned · In fieldwork · In
+  review · Reporting · Closed. Stepper above detail tabs.
+- **Findings** are cross-source (test / AI / manual). Mini-kanban for
+  remediation. `AIResponse`-styled body when AI-authored.
+- **Workflow library** — card grid. Detail → `/workflows/:id`. Run →
+  `/workflows/:id/run` (executor) with live findings feed.
+- **One-Click Audit** is a 4-step wizard routed from a process page;
+  output is a consolidated cross-reference report.
+- **Reports** are the only surface on **warm paper** canvas (`paper-50`
+  / `#FAF7F2`). Serif body toggle, 66ch, drop-cap para 1. App surfaces
+  stay on cool canvas (`#FCFAFD`).
+- **AI Concierge** has two tools: Document Forensics + Table Extractor.
+- **Roles** = 6 built-in + custom. Admin `Roles & Permissions` is a
+  flat matrix, never nested accordions.
+
+### Composition recipes (compose, don't invent)
+
+- `EntityChip` — the one pill that carries a border (entity ref, not a
+  category badge).
+- `SeverityPill` — `<Pill tone=...>Critical|High|Medium|Low|Info</Pill>`.
+  Always spelled out.
+- `KPITile` — 240×140 outlined Card with label + `display-md` serif
+  number + delta sub-metric.
+- `EmptyState` — three flavors: first-use (illustration), filtered-out
+  (no illustration), error (AlertCircle `risk`).
+- `ConfirmDestructiveModal` — `sm`, serif title, destructive button,
+  "Type DELETE" for top-level entities.
+- `SlideOverEditor` — 520/720px right panel with tabs + sticky footer.
+- `StatusBanner` — sticky below page header, single instance only.
+
+### Content voice
+
+- **Sentence case always**, except the `label` token.
+- **Spell out severity** (`Critical`, `High`, `Medium`, `Low`, `Info`).
+  Never `C/H/M/L` or `P0`.
+- **IRA speaks first person**: "I found…", "I can't answer that without
+  more context." Never "The AI thinks…".
+- **Errors** structure: what happened (one sentence) + what to do (one
+  sentence). Never raw 500s.
+- **Dates** are `Apr 28, 2026` by default; absolute + UTC in audit
+  contexts; relative only in ambient surfaces (with absolute in title).
+
+---
+
 ## Workflow
 
 1. **Read DESIGN.md** (in this folder) for any spec you don't have

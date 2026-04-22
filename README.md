@@ -10,12 +10,25 @@ matches the system — no memorizing, no drift, no style policing in PR.
 ```
 design-sys/
 ├── SKILL.md                       ← Claude Code skill entry (activates on UI/GRC requests)
-├── DESIGN.md                      ← canonical 10-section spec (the source of truth)
+├── DESIGN.md                      ← canonical 16-section spec (the source of truth)
 ├── preview.html                   ← light-mode visual reference (open in a browser)
 ├── preview-dark.html              ← dark-mode visual reference
 ├── assets/dashboard-preview.png   ← screenshot of the app-shell composition
 └── README.md                      ← you are here
 ```
+
+`DESIGN.md` covers: §1 theme · §2 color · §3 typography · §4 components
+· §5 layout · §6 elevation · §7 do/don't · §8 responsive · §9 agent
+prompts · §10 per-component state matrices · **§11 cross-cutting
+patterns** (⌘K, workspace, share, filter bar, notifications, comments,
+audit trail, RBAC) · **§12 AI / IRA surfaces** (three-panel chat,
+artifact panel, clarification chips, assumptions, progressive loader,
+workflow builder canvas) · **§13 domain surfaces** (Home, Governance,
+Execution, Workflows, Intelligence, System — the 24-page IA) · **§14
+roles & personas** (7 personas with RBAC tailoring) · **§15
+composition recipes** (EntityChip, KPI tile, empty states, destructive
+modal, slide-over editor, status banner) · **§16 content voice** (tense,
+sentence case, numbers, dates, severity language, AI voice, errors).
 
 The design language in one line:
 **Editorial premium in a domain that's been corporate for too long.**
@@ -205,4 +218,19 @@ Distribution to external teams requires explicit permission.
 
 ---
 
-_Last refined: 2026-04-23 · dark sidebar + cool canvas shell · maintainer: @1-fish-chapaak_
+## Reference consumer
+
+This spec is tuned to a real GRC product — the
+[Auditify](https://github.com/tech-irame/auditify-revamp) platform by
+IRAME.AI (IRA — Intelligent Risk Auditor). Sections 11–16 codify the
+patterns that emerged while building that product: the three-panel
+chat, the seven-persona RBAC, the one-click audit flow, the
+centralized findings tracker, the on-paper reports, the AI concierge
+tools. When in doubt about a GRC surface, consult Auditify's PRDs as
+the canonical "what does this screen actually need to do" reference,
+then return to `DESIGN.md` for how it should look.
+
+---
+
+_Last refined: 2026-04-23 · dark sidebar + cool canvas shell · §§11–16
+expanded from Auditify reference · maintainer: @1-fish-chapaak_

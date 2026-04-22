@@ -781,6 +781,89 @@ Filter bar: sticky top of table, paper-0 bg, 1px paper-200 bottom border.
 Pagination: right-aligned, "1–50 of 142 · ‹ ›".
 ```
 
+**"Build me the IRA three-panel chat page"** — see §12.1
+```
+Layout: sidebar (app shell) + history panel (280) + conversation (flex)
+        + artifact panel (420–520 collapsible).
+History panel: paper-0 bg inside the canvas, 1px paper-200 right border,
+  [+ New Chat] primary button sticky top, Pinned group, then Today /
+  Yesterday / Last 7 days / Earlier. Each session row 56px.
+Conversation: user message = "You" label + body-lg, no bubble.
+  IRA message = AIResponse (§4) with gradient border. Clarifications
+  render inline as secondary-variant chips.
+Input bar: 72px, paper-0 bg, 1px paper-200 top border, Paperclip +
+  textarea + Send (⌘↵).
+Artifact panel: fixed tabs in order — Plan · Code · Sources · Result.
+  Only show tabs with content. Sticky footer action row.
+```
+
+**"Build me the risk register"** — see §13.2.4
+```
+Page header (§5): breadcrumb "Governance › Risk Register", heading-xl
+  sans title, page actions "+ Add risk" (primary) + "Export" (ghost) +
+  "Heatmap" (secondary, opens side panel).
+Filter bar (§11.4): search + severity chips + owner + process + status
+  + advanced.
+AI banner (once): brand-50 bg, Sparkles icon, "IRA found 4 new risks
+  since your last review." + View secondary button.
+Data table: columns ID (mono R-0087) · Title · Process · Severity
+  (pill spelled out) · Likelihood · Impact · Score (tabular) · Owner
+  · Status. 44px comfortable rows. Selected row: brand-50 bg + 2px
+  brand-600 left border.
+Detail: slide-over editor (§15.7), 720px, tabs Overview · Controls ·
+  Evidence · Audit trail.
+```
+
+**"Build me the command palette"** — see §11.1
+```
+Overlay: ink-900/0.40 + 4px backdrop-blur.
+Container: 640px, r-xl, paper-0 bg, shadow-xl + 1px brand-100 top
+  hairline.
+Input: 56px, Search icon 20px ink-500 left, body-lg ink-900, placeholder
+  "Search risks, controls, reports… or ask IRA anything."
+Sections (dividers 1px paper-200): Pages · Entities · Ask IRA (always
+  last). Each starts with a label-token section header.
+Ask IRA row: Sparkles icon, "Ask IRA: <query>" body-lg brand-700,
+  right-pointing chevron. Promotes above Entities when query is NL-ish.
+Footer: 36px paper-50 bg, body-sm ink-500, "↵ to open · ⌘↵ new tab · esc".
+```
+
+**"Build me the workflow library card"** — see §13.4.1
+```
+Card (outlined), 280×200, r-lg.
+Icon tile 40×40 r-md brand-50 bg + brand-600 Lucide icon.
+Title heading-sm, 2-line clamp.
+Description body-sm ink-600, 3-line clamp.
+Meta row: category pill (flat) + "Used 143 times" body-sm ink-500.
+Hover: shadow-sm, border paper-300.
+```
+
+**"Build me a finding row"** — see §13.3.4
+```
+Data row height 44px. Columns:
+  ID (mono F-0321, ink-500) · Severity pill (spelled out) · Title
+  (body weight 540, 1-line clamp) · Source pill (Test / AI / Manual) ·
+  Status (Open / Remediation / Closed / Accepted risk) · Owner (avatar
+  + name) · Due (tabular date) · Days open (tabular).
+Row click: opens right slide-over (§15.7) 720px with AI-authored
+  narrative body if source=AI (AIResponse style, no chat bubble),
+  remediation mini-kanban, evidence links, linked entities as
+  EntityChips (§15.2).
+```
+
+**"Build me the AI progressive loader"** — see §12.5
+```
+One row below the user message. Steps stack vertically with 4px gap:
+  ●○○  Understanding query…         (pending, body ink-400)
+  ●●○  Planning analysis…           (active, body weight 540 ink-900,
+                                     3 brand-600 dots staggered 400ms)
+  ✓   Writing code…                 (done, strike-through ink-500,
+                                     14px CheckCircle2 compliant)
+On completion collapse the whole block to a single body-sm ink-500
+meta line: "Answered in 3.1s · 2 steps · 847 rows" — which becomes
+the AIResponse (§4) header.
+```
+
 ### Refusal list
 
 If a generated UI includes any of the following, redo it:
@@ -1109,6 +1192,1170 @@ set `fill=` on a Lucide SVG.
 
 ---
 
+## 11. Cross-cutting patterns
+
+These patterns live above every page and apply system-wide. When building
+any new page, assume these are present — don't reinvent them.
+
+### 11.1 Command palette (⌘K)
+
+The **only** global search surface. Invoked by `⌘K` / `Ctrl+K` or via the
+sidebar "Search" top-action. One input, three result kinds, zero modes.
+
+```
+width: 640px (md), 720px (lg viewport)
+radius: r-xl (16)
+surface: paper-0 (light) / ink-800 (dark)
+shadow: shadow-xl + 1px brand-100 top-border hairline (signals this is
+        the global action surface, not a generic popover)
+overlay: ink-900 / 0.40 + 4px backdrop-blur
+padding: 0 (input touches edges); sections get 8px vertical pad
+max-height: 70vh (scrolls)
+```
+
+**Anatomy** (top → bottom):
+
+1. **Input row** — 56px tall, no border, `Search` icon 20px `ink-500` on
+   the left, 16px gap, `body-lg` `ink-900` typed text, placeholder
+   "Search risks, controls, reports… or ask IRA anything."
+   Escape clears; Enter routes.
+2. **Result sections**, stacked with a 1px `paper-200` divider between.
+   Each section starts with a `label`-token section header in `ink-500`
+   at 8px top-pad.
+   - **Pages** — static routes. Icon-left from §10.13; label `body`;
+     secondary route text `body-sm` `ink-500` right-aligned.
+   - **Entities** — risks, controls, engagements, reports, sessions,
+     workflows, evidence. Same row pattern plus a severity pill on the
+     right for risks/findings; an entity-type tag for everything else.
+     ID in `code-sm` JetBrains, dim `ink-500`, left of title.
+   - **Ask IRA** — always the last section. Single row: `Sparkles` icon,
+     "Ask IRA: <query>" in `body-lg`, `brand-700`, right-pointing
+     chevron. Hitting Enter while this row is highlighted routes to
+     `/chat` with the query pre-filled.
+3. **Footer** — 36px tall, `paper-50` bg, `body-sm` `ink-500`. Shortcut
+   hints: `↵ to open`, `⌘↵ to open in new tab`, `esc to close`.
+
+**Behavior**:
+
+- Debounce 120ms. Zero query = recent searches (last 8) + pinned
+  entities. Token-aware fuzzy match.
+- Max 8 results per section; "Show all n" row at bottom of a section
+  routes to the entity's list page with the query pre-applied.
+- Natural-language queries (length >20 chars, ending in "?", or
+  containing verbs like "show / find / summarize") auto-promote the
+  "Ask IRA" row above "Entities."
+- Keyboard only: arrow keys move selection, Enter opens, `⌘↵` opens in
+  new tab, `⌘shift+K` scopes to Admin for superuser.
+- Never closes on click-outside during an in-flight request (prevents
+  accidental dismiss mid-stream).
+
+**Rules**:
+
+- **Never** add a second "search" input anywhere else. Page-level filters
+  (§11.4) are not global search.
+- **Never** show a loading spinner inside the palette — it implies
+  remote latency. Inline a 2px `brand-600` top-edge bar that drifts
+  right at 1.4s cycle during async work.
+
+### 11.2 Workspace selector (multi-org)
+
+Sits at the top of the sidebar as the first surface below the logo. Treats
+multi-tenant switching as a quiet, infrequent action — not a splashy CTA.
+
+```
+container: 220×48, radius r-md (8), bg sidebar-surface, border none
+padding: 0 12px, gap 8
+content: 28×28 avatar (workspace mark, brand-900 bg + paper-0 monogram)
+         + stacked label (workspace name 13/600 sidebar-accent,
+         role 11/500 sidebar-text-dim)
+         + ChevronsUpDown 14px sidebar-text-muted, right-aligned
+```
+
+On open, a popover (w-320, `paper-0` bg, `r-lg`, `shadow-md`) lists all
+workspaces grouped by organization. Each row: 40px h, workspace avatar,
+name `body`, role `body-sm` `ink-500` right-aligned, current one carries
+a `CheckCircle2` icon in `brand-600`.
+
+**Rules**:
+
+- Switching a workspace is a hard route change — never optimistically
+  swap data in-place. Show a 300ms `RouteTransition` overlay.
+- Show a warning toast if the user is leaving unsaved form edits on the
+  current workspace.
+- Admin-only workspaces (e.g., tenant diagnostics) sit in a separate
+  bottom group with a `ShieldAlert` glyph in `mitigated`.
+
+### 11.3 Share dialog + permission model
+
+Any entity — risk, control, engagement, session, dashboard, report,
+workflow — is shareable via a shared `ShareDialog` (`md` modal, §10.12).
+
+**Body** structure:
+
+1. **Recipient input** — multi-token input; suggestions dropdown shows
+   users/teams with avatar + role. Typing an email invites an external
+   auditor (generates a time-boxed read-only link).
+2. **Permission** — segmented tabs (§10.6 segmented): `View` · `Comment`
+   · `Edit`. External invitees are locked to `View` unless admin.
+3. **Expiry** — Select (§10.4) with presets `7 days`, `30 days`,
+   `90 days`, `Never`. External default: 30 days.
+4. **Message** (optional) — Textarea, 3 rows, 240-char max.
+5. **Link row** — read-only `Input` with the share URL + `Copy` icon-button
+   on the right. Copies to clipboard + toast "Link copied."
+6. **Existing access** — list of current recipients with role pill and
+   kebab (revoke / change permission).
+
+**Footer**: `Cancel` (ghost) + `Send` (primary). Send triggers email
+notification with a 128×72 preview image.
+
+**Rules**:
+
+- External auditors see a **read-only shell** — sidebar collapses to
+  only the shared item's page, command palette is scoped to that item,
+  no cross-entity navigation. Use the `SharedView.tsx`-style chrome:
+  persistent `ReadOnlyBanner` at the top (`evidence-50` bg, `evidence`
+  text, `Info` icon, no dismiss).
+- Share on a **chat session** follows fork-on-interact: recipient views
+  read-only; clicking `Continue` forks via `POST /sessions/{id}/fork`
+  into their own workspace.
+- Revoking access takes effect immediately; show a subtle "Access
+  revoked" toast to the former recipient if they're live.
+
+### 11.4 Filter bar (registries, tables, lists)
+
+Every list/table page follows the **same filter contract**. Memorize once,
+use everywhere — inconsistency here reads as product chaos.
+
+**Horizontal layout** (left → right):
+
+```
+[ Search input (debounced 250ms) ]
+[ Status chips — tabs, multi-select ]
+[ Date range picker ]
+[ Owner select ]
+[ Severity / Priority select (where applicable) ]
+[ Advanced filters button (opens slide-over) ]
+--- spacer ---
+[ View mode toggle ] [ Density toggle ] [ Column settings ]
+```
+
+- **Container**: `paper-0` bg, `1px paper-200` bottom border, 56px h,
+  sticky top of the table viewport.
+- **Search input**: `sm` size, `Search` icon left, placeholder matches
+  the entity ("Search risks…", "Search controls…").
+- **Status chips**: rendered as **segmented tabs** (§10.6) for 3–5
+  options; rendered as **multi-select pills** for >5 options (pills
+  follow §10.10 — no border, no icon; selected pill adds a 2px
+  `brand-600/20` outer ring as the selection tell).
+- **Advanced filters**: opens a right-aligned slide-over (420px) with all
+  filterable dimensions grouped. Footer has `Reset` (ghost) + `Apply`
+  (primary). A blue `evidence` dot on the button indicates active
+  advanced filters.
+- **Persistence**: filter state persists **per session** (URL query-string
+  is canonical). Navigating away and back restores it. Explicit `Reset all`
+  clears.
+
+**Empty-state hint row** when filters return zero: a single `body-sm`
+`ink-500` row — "No results match these filters. [Clear all]" — with
+the clear action as an inline `link` variant button.
+
+### 11.5 Notifications
+
+Two parallel channels, never mixed:
+
+1. **Toasts** (§10.9) — ephemeral system events: save/update/delete,
+   workflow completion, share received live, network error. Never used
+   for durable information.
+
+2. **Notification inbox** — lives as a right-edge slide-over (420px)
+   summoned from the sidebar `Bell` icon-button (top-row, near Search).
+   Unread count renders as a `sidebar-accent` badge with `brand-600`
+   text. Inbox content:
+
+   - **Tabs** (§10.6 underline): `All` · `Assigned to me` · `Mentions` ·
+     `Shared`.
+   - **Row**: 72px tall, avatar + title (`body` weight 540) + meta
+     (`body-sm` `ink-500`) + time-ago right-aligned. Unread rows carry
+     a 2px `brand-600` left border; read rows have none.
+   - **Bulk action bar** appears on scroll when any rows are selected
+     via checkbox: `Mark read` · `Archive` · `Mute sender`.
+
+3. **Email** — mirror of the inbox, configurable per-category in
+   `/admin/settings`. Never used for non-user events (cron heartbeats,
+   health).
+
+**Rules**:
+
+- **Never** stack more than one toast at a time in the visible region —
+  newer toasts supersede older (sonner default). Error toasts are the
+  exception: they persist until dismissed and can stack up to 3.
+- **Never** use a toast for anything that will be needed more than once;
+  if a user might want to read it again, route it through the inbox.
+
+### 11.6 Comment threads
+
+Every entity surface can receive comments via a shared `CommentsThread`
+component. The thread lives in a right-hand drawer or an embedded panel.
+
+**Composer**:
+
+- Textarea (`md`), rich-text minimal: **bold**, _italic_, code, link,
+  `@mention` (opens typeahead dropdown with user suggestions), `#`
+  entity-link (opens palette-style picker).
+- Right-aligned `Send` primary button; left-aligned `Resolve thread`
+  ghost action when a thread is active.
+
+**Comment row**:
+
+```
+layout: avatar (32) + content column + actions (visible on hover)
+padding: 12px 16px
+hover: paper-50 bg
+author: body weight 540 ink-900
+time: body-sm ink-500, tabular-nums
+body: body ink-800, 16px gap above
+reactions: inline flat pill row — "👍 3  ✅ 1" uses Lucide glyphs
+           (ThumbsUp, CheckCircle2) as 14px `icon-sm` with tabular count
+```
+
+A **Resolved** thread dims to 60% opacity and gains a tiny `CheckCircle2`
+`compliant` left-edge marker. The **Reopen** action is in the kebab.
+
+**Rules**:
+
+- **Never** render comments inline with primary data (e.g., inside a
+  risk row). Always in a drawer or side-panel so the data reads cleanly.
+- **Never** use avatar circles for the **AI** commenter — IRA's remarks
+  appear as an indented `AIResponse` block (§4), never as a chat-style
+  bubble. Author shows "IRA" in `brand-700` weight 600.
+
+### 11.7 Audit trail drawer
+
+Every detail page has an **Audit trail** tab or drawer. The trail is a
+vertical timeline of CRUD actions, each as a compact row:
+
+```
+timestamp (tabular-nums, ink-500) · user avatar + name ·
+action verb (created | updated | deleted | approved | rejected |
+            assigned | shared | forked | exported | executed)
+field diff (when `updated`): two-column before/after in code font,
+            paper-50 bg, 1px paper-200 border, r-sm
+```
+
+- **Sticky filter row** at top: by actor, by action type, by date range.
+- **Export** (`Download` icon) → `audit-trail-<entityId>-<date>.csv`.
+- **Never** truncate diffs — an auditor needs the full value. Long
+  strings wrap with a 2-line clamp and a `Show full` inline link-button.
+
+### 11.8 Role-based UI (RBAC)
+
+The platform serves seven personas (see §14) with distinct capability
+sets. UI elements that the current user lacks permission for follow the
+**hide-or-disable** rule:
+
+| Condition                                         | Treatment                                                                 |
+|---------------------------------------------------|---------------------------------------------------------------------------|
+| Feature is invisible to this role                 | Hide entirely — no greyed-out affordances                                 |
+| Feature visible but action is blocked             | Disabled state (§10.8) with tooltip: "Your role (<Role>) can't do this."  |
+| Feature visible, action needs elevated permission | Enabled, but first click opens a small explainer popover with a request-access link |
+| Read-only share recipient                         | Entire page enters `ReadOnlyBanner` mode (see §11.3)                      |
+
+**Never** silently no-op a click on a disabled element. Always show a
+tooltip or a popover explaining why.
+
+---
+
+## 12. AI surfaces — the IRA pattern
+
+The platform's signature surface is its AI copilot (IRA — Intelligent
+Risk Auditor). The AI interaction pattern is load-bearing for the entire
+product, so it gets its own section.
+
+### 12.1 Three-panel chat layout
+
+`/chat` is **not** a single-column chat. It's a three-panel workspace:
+
+```
+┌────────────────┬────────────────────────────┬──────────────────┐
+│  History       │       Conversation         │    Artifacts      │
+│  (280px)       │       (flexible)           │   (420–520px)    │
+│                │                            │                   │
+│  [+ New Chat]  │  ┌──────────────────────┐  │  [Plan]          │
+│                │  │  Messages thread     │  │  [Code]          │
+│  Pinned  (3)   │  │                      │  │  [Sources]       │
+│  ├ Q3 SOX…    │  │  User: ...           │  │  [Result]        │
+│  └ Vendor…    │  │  IRA:  ...           │  │                   │
+│                │  │  ...                 │  │  ────────────    │
+│  Today         │  │                      │  │                   │
+│  ├ Invoice…   │  │                      │  │  Artifact view    │
+│  └ Controls…  │  └──────────────────────┘  │  (table / code /  │
+│                │  ┌──────────────────────┐  │   chart / prose)  │
+│  Yesterday     │  │  Input bar           │  │                   │
+│  ├ ...        │  │  [📎] [Send ⌘↵]     │  │                   │
+│                │  └──────────────────────┘  │  [Add to dash]    │
+│  Earlier       │                            │  [Add to report]  │
+└────────────────┴────────────────────────────┴──────────────────┘
+```
+
+**Rules**:
+
+- History panel **does not replace** the app sidebar — it sits **inside**
+  the chat page, to the right of the sidebar. The sidebar remains the
+  app shell everywhere. History panel width: 280px; collapses to 48px
+  icon-rail on `<xl`; hides on `<lg` (opened via a sheet from a
+  `PanelLeft` icon-button in the conversation header).
+- Conversation column is **never a chat bubble stream**. User messages
+  get a single `ink-500` "You" label above body text — `body-lg`, no
+  bubble. IRA messages follow §4 `AIResponse`.
+- Artifact panel is collapsible (right edge grip). Default state: open
+  when any message in the thread has an artifact; closed otherwise.
+
+### 12.2 Artifact panel
+
+Tabs (§10.6 underline) pin to the top of the right panel. Order is
+fixed — it's the order of the pipeline:
+
+| Tab       | Content                                                                                        |
+|-----------|------------------------------------------------------------------------------------------------|
+| `Plan`    | IRA's step-by-step analysis plan. Ordered list, each step is a card (§4 muted variant) with a status icon (`Circle` pending, `Loader2` running, `CheckCircle2` done, `AlertCircle` failed). |
+| `Code`    | The generated SQL / Python. Code block with `shiki` syntax highlighting, `JetBrains Mono`, 13px. Header bar: language pill, copy button, "Re-run" ghost button. |
+| `Sources` | Uploaded files + data source rows. Each row: file icon, name, size, row-count, status pill. Clicking expands to reveal schema (column name + inferred type in a 2-col grid). |
+| `Result`  | The final answer: table, chart, metric, or prose narrative. Full-width, `paper-0` card. Table uses §4 DataGrid rules; charts use palette §2.   |
+
+**Action row** at the bottom of the panel (sticky, `paper-0` bg, 1px
+`paper-200` top border):
+
+- `Add to dashboard` — opens a dashboard picker (§13.3) and drops the
+  artifact as a widget.
+- `Add to report` — opens a report picker, inserts as a section.
+- `Save as workflow` — opens a naming modal, creates a workflow
+  template from the generated code.
+- `Download` — CSV (data) or PNG (chart) or PDF (prose).
+- `Share` — opens §11.3 `ShareDialog`.
+
+**Rules**:
+
+- **Never** display the code tab empty with a "No code generated yet"
+  placeholder — collapse it. Only show tabs that have content.
+- **Never** auto-switch tabs mid-stream. The user picks where to look.
+- **Never** re-run code without an explicit confirmation — analytics can
+  be expensive.
+
+### 12.3 Clarification chips (inline, not modals)
+
+When IRA's input is ambiguous, it **does not open a modal**. Instead, the
+assistant message renders an inline clarification block:
+
+```
+┌────────────────────────────────────────────────────────┐
+│  I see two ways to interpret this — which one?         │
+│                                                        │
+│  ┌──────────────────┐  ┌──────────────────────────┐   │
+│  │ Q1 2026 only     │  │ All time                 │   │
+│  └──────────────────┘  └──────────────────────────┘   │
+│  ┌──────────────────────────────────────────────┐     │
+│  │ Just high-severity findings                  │     │
+│  └──────────────────────────────────────────────┘     │
+│                                                        │
+│  … or type a reply in your own words.                 │
+└────────────────────────────────────────────────────────┘
+```
+
+- **Chips** are `secondary` variant buttons at `sm` size, `r-full`
+  radius, 1px `paper-200` border, `body-sm`. Hover: `brand-50` bg,
+  `brand-700` text. Click auto-sends the chip's text as the next user
+  message.
+- **Block container**: 1px `paper-200` border (no fill), 16px pad,
+  `r-lg`. Nested in the `AIResponse`.
+- **Copy** is conversational and declarative. Never "Please choose one
+  of the following options:". Prefer "I see two ways to interpret this
+  — which one?"
+
+### 12.4 Assumptions panel (editable AI inputs)
+
+When a query auto-promotes to analysis without explicit clarification,
+IRA surfaces the assumptions it made **in a collapsible panel above
+the artifact tabs**:
+
+```
+┌──────────────────────────────────────────────────┐
+│  Assumptions IRA made             [Edit ▾]       │
+├──────────────────────────────────────────────────┤
+│  • Time range: Q1 2026 (Jan 1 – Mar 31)         │
+│  • Severity: High + Critical only               │
+│  • Scope: All 14 business units                 │
+└──────────────────────────────────────────────────┘
+```
+
+- Surface: `brand-50` bg, 1px `brand-200` border, `r-md`, 16px pad.
+- Each assumption is a row: bullet + short label in `body-sm` `ink-800`.
+- `Edit` opens an inline form (`sm` inputs, 12px gap) with an
+  `Apply & re-run` primary button at the bottom.
+- Collapsed state: single-line summary "3 assumptions applied" with a
+  `ChevronDown`.
+
+### 12.5 Progressive loader (multi-step AI)
+
+While analysis runs, the conversation column shows a **single animated
+row** directly below the user's message — not a blob of spinners:
+
+```
+●○○  Understanding query…
+●●○  Planning analysis…
+●●●  Writing code…
+     Executing…
+     Summarizing…
+```
+
+- Active step: `body` `ink-900` weight 540, 3 filled dots in `brand-600`.
+- Completed steps: strikethrough in `ink-500`, with a `CheckCircle2`
+  `compliant` 14px glyph replacing the dots.
+- Pending steps: `body` `ink-400`, three `ink-300` dots.
+- Stagger pulse: 400ms between dots, standard ease.
+- When all steps complete, the row collapses into a single `body-sm`
+  `ink-500` "Answered in 3.1s · 2 steps · 847 rows" meta line — which
+  becomes the header of the final `AIResponse`.
+
+**Rules**:
+
+- **Never** show a generic "Thinking…" spinner. Every step must be
+  named.
+- **Never** hide the loader while the model is streaming partial output.
+  The caret (§4 `AIResponse`) and the loader co-exist: loader shows the
+  pipeline stage; caret shows the live token stream inside `Result`.
+
+### 12.6 Workflow builder canvas (chat + preview)
+
+A secondary mode of the chat page, routed via `/chat?mode=workflow`.
+Same three-panel layout, but the right panel is **not** tabs — it's a
+live preview of the workflow being described.
+
+```
+History │ Conversation │ Canvas (preview of workflow steps)
+```
+
+- **Canvas** renders each step as a `Card` (§4 outlined) with step
+  number, title, short description, and a data-binding pill (source →
+  ref). Steps are connected with a 2px `paper-300` connector line;
+  hover on a step highlights its upstream/downstream connectors in
+  `brand-400`.
+- **Canvas is read-only**. The user's only way to edit is by typing a
+  natural-language instruction ("Swap step 3's filter to exclude
+  intercompany entries"). IRA updates the canvas in place.
+- **Finalize** button sits sticky at the bottom of the canvas: opens
+  a save-workflow modal (name, category, visibility).
+
+### 12.7 Quick actions on empty chat
+
+Before the user types, the conversation column shows a **single** hero
+block — not a grid of promotional cards:
+
+```
+Serif display-lg: "What would you like to know?"
+body-lg ink-500 (one line): "Upload data, pick a source, or ask IRA
+                             anything about your audit."
+60px gap
+Row of 4 "quick actions" — secondary buttons with a left icon:
+  • "Analyze a file" (Upload)
+  • "Build a workflow" (GitBranch)
+  • "Summarize last audit" (History)
+  • "Find open risks" (Search)
+32px gap
+"Recent sessions" — horizontal scroll row of 4 Card (muted variant)
+                    showing title, last-used time, preview.
+```
+
+**Rules**:
+
+- **Never** generate AI-promotional copy ("I'm your AI copilot, ready to
+  help!"). The tone is editorial — the user is the subject of the sentence.
+- **Never** render empty quick-actions as a 2×2 grid of glowing gradient
+  tiles. Flat, secondary-variant, one row.
+
+---
+
+## 13. Domain surfaces
+
+These are the GRC surfaces the platform ships. Each gets a concrete
+pattern so a new contributor can stand up a new surface without guessing.
+The full IA lives in §13.0.
+
+### 13.0 Information architecture
+
+The sidebar groups surfaces into four bands. This order is canonical —
+never re-shuffle without product-council approval.
+
+```
+IRAME.AI
+[Workspace selector]              ← §11.2
+
+⌘K  Ask IRA / Search              ← §11.1
+Bell  Notifications               ← §11.5
+
+HOME                              → /home                   §13.1
+IRA AI                            → /chat                   §12
+
+─── AUDIT LIFECYCLE ───
+
+GOVERNANCE
+  Business Processes              → /governance/processes   §13.2.1
+  RACM                            → /governance/racm        §13.2.2
+  Control Library                 → /governance/controls    §13.2.3
+  Risk Register                   → /governance/risks       §13.2.4
+  Audit Planning                  → /governance/planning    §13.2.5
+
+EXECUTION
+  Engagements                     → /execution/engagements  §13.3.1
+  Control Testing                 → /execution/testing      §13.3.2
+  Evidence & Workpapers           → /execution/evidence     §13.3.3
+  Findings                        → /execution/findings     §13.3.4
+
+WORKFLOWS                         → /workflows              §13.4
+
+─── INTELLIGENCE ───
+
+DASHBOARDS                        → /dashboards             §13.5.1
+REPORTS                           → /reports                §13.5.2
+AI CONCIERGE
+  Document Forensics              → /ai-concierge/docs      §13.5.3
+  Table Extractor                 → /ai-concierge/tables    §13.5.4
+
+─── SYSTEM ───
+
+CONFIGURATION                     → /configuration          §13.6.1
+ADMIN
+  Users & Teams                   → /admin/users            §13.6.2
+  Roles & Permissions             → /admin/roles            §13.6.3
+  System Settings                 → /admin/settings         §13.6.4
+  Integrations                    → /admin/integrations     §13.6.5
+  Audit Logs                      → /admin/logs             §13.6.6
+
+─── RECENT SESSIONS ───  (scrollable, collapsible)
+
+[User profile card]               ← §5 sidebar user card
+```
+
+### 13.1 Home
+
+The home dashboard is **action-oriented**, not decorative. Lead Auditor,
+Staff Auditor, Audit Manager, and CAE each see the same layout but with
+role-weighted content.
+
+**Layout** (single column, stacked):
+
+1. **Page header** (§5) — `display-xl` serif: "Good morning, Priya."
+   Subtitle `body-lg ink-600`: "You have **3 items** waiting on you and
+   **2 engagements** on track this week." Numbers bold in `ink-900`.
+2. **Action queue** — horizontal scroll row of `Card` (elevated
+   variant), each 320×180, each representing a pending action:
+   "Review Q1 SOX findings", "Approve vendor scope change", etc.
+   Each card has a severity pill + CTA button. This is the single most
+   important surface on the page.
+3. **KPI band** — four `Card` (outlined), each 240×140:
+   - `Open risks` with delta arrow + `evidence` pill trend.
+   - `Control coverage` as % with a tiny 40px sparkline.
+   - `Findings this quarter` with severity breakdown.
+   - `Last audit` with relative time ("12 days ago") + link.
+4. **Engagement timeline** — Gantt chart (§13.2.5), compact height,
+   "This quarter" default range.
+5. **Risk exposure heatmap** — 5×5 grid, see §13.2.4 risk heatmap.
+   Read-only here; clicking a cell deep-links to the filtered Risk
+   Register.
+
+**Rules**:
+
+- **Never** mock KPIs. If data is missing, show a 2-line empty state
+  inline in the card: "No data yet. [Connect a source]" in `ink-500`.
+- **Never** use gradient card backgrounds. KPI differentiation is via
+  typography (number size) and severity pills, not color fills.
+- **Never** put promotional content ("Try our new workflow!") on Home.
+  Home is operational.
+
+### 13.2 Governance
+
+The governance cluster is where policy-of-record lives. All surfaces
+here are **registries** — list + detail, with CRUD and versioning.
+
+#### 13.2.1 Business Processes
+
+The container for everything else. Each process owns an SOP, a RACM,
+workflows, and risks.
+
+**List page**: data table (§4), columns:
+`Code` (mono, 13px) · `Name` (body) · `Owner` (avatar + name) ·
+`Risks` (count pill) · `Controls` (count pill) · `Last reviewed`
+(date). Row action: open detail.
+
+**Detail page** opens at `/governance/processes/:id`:
+
+- **Page header** with breadcrumb `Governance › Business Processes › <name>`.
+- **Tab bar** (§10.6 underline) — `SOP` · `RACM` · `Workflows` · `Risks`.
+  Exactly four tabs — no more.
+- **SOP tab**: long-form editor. Uses the `Report reader` layout (§5)
+  with editable sections. `@mentions` for controls and risks resolve to
+  mini-tiles.
+- **RACM tab**: embedded RACM grid (§13.2.2) scoped to this process.
+- **Workflows tab**: list of workflows linked to this process + a
+  `Run One-Click Audit` primary button (see §13.4.2).
+- **Risks tab**: filtered Risk Register (§13.2.4) for this process.
+
+#### 13.2.2 RACM (Risk-Control Matrix)
+
+A specialized data grid, not a generic table. Rows = risks; columns =
+controls; cells = mapping strength.
+
+**Cell content**:
+- Empty: hollow circle `ink-300`.
+- Weak mapping: quarter-filled circle `mitigated`.
+- Strong mapping: filled circle `compliant`.
+- Under review: `AlertCircle` glyph, `high`.
+
+**Hover** on a cell expands a popover (§10.3) with the mapping's
+evidence count, last test date, and a link to open control-testing
+scoped to this risk/control pair.
+
+**Generator** lives at `/governance/racm/generate` as a full-page
+wizard (4 steps: Upload SOP → Extract → Review → Commit). Step 4 is a
+read-only preview that renders the extracted RACM before writing.
+
+**Rules**:
+
+- **Never** color a RACM cell with red/green alone — always carry the
+  glyph (redundant encoding).
+- **Never** allow editing in the matrix cell itself. Click to open a
+  side drawer with the full mapping form.
+
+#### 13.2.3 Control Library
+
+Data table (§4). Columns:
+`ID` (mono `CTL-0142`) · `Name` · `Framework` (pill — SOX, ISO, NIST,
+custom) · `Type` (pill — Preventive, Detective, Corrective) ·
+`Frequency` · `Owner` · `Status` (severity pill — Active, Draft,
+Retired, Under review).
+
+**Detail drawer** (`lg` modal) — tabs `Overview` · `Tests` · `Evidence`
+· `RACM usage` · `Audit trail`.
+
+**Bulk actions** when rows are selected: `Assign owner`, `Change
+framework`, `Retire`, `Export`. Bar slides up from the bottom of the
+viewport.
+
+#### 13.2.4 Risk Register
+
+Data table + a persistent `Risk heatmap` button in the filter bar that
+opens a side-panel visualization.
+
+**Columns**: `ID` (mono `R-0087`) · `Title` · `Process` · `Severity`
+(pill — Critical / High / Medium / Low, spelled out) · `Likelihood` ·
+`Impact` · `Score` (numeric, tabular) · `Owner` · `Status`.
+
+**Risk heatmap** (5×5):
+- X = Likelihood (1–5); Y = Impact (1–5).
+- Cell color from diverging scale (§2): low-left → high-right.
+- Cell content: count of risks, `numeric` 20px, centered.
+- Click a cell filters the table to that bucket.
+- **Always** label the cell with count text — never color-only.
+
+**AI banner** (the only AI surface on governance pages) sits above the
+filter bar: `brand-50` bg, 1px `brand-200` border, `Sparkles` icon,
+body "IRA found 4 new risks since your last review." + `View`
+secondary button. Dismisses per session; re-appears when data changes.
+
+#### 13.2.5 Audit Planning
+
+v1: **Timeline (Gantt) only.** Resources, risk matrix, and budget
+views are v2.
+
+**Gantt**:
+- Rows = engagements; columns = weeks (default) / months (toggle).
+- Bar: 24px tall, `r-sm`, fills from start → end date. Color by
+  engagement status (`draft`, `evidence` active, `mitigated` at risk,
+  `compliant` complete).
+- Label on the bar: engagement name in `paper-0` (on dark bar) or
+  `ink-900` (on light bar — auto-contrast), truncated with ellipsis.
+- Dependency arrows between bars: 1.5px `ink-400` curved line with a
+  small chevron head.
+- Today marker: vertical 1px `brand-600` dashed line with "Today" label
+  at the top.
+
+**Rules**:
+
+- **Never** use more than 5 color categories on the Gantt — use pill
+  badges inside the bar for sub-classification.
+- **Never** overlap bars without a visible offset — stack them on
+  separate rows to keep legibility.
+
+### 13.3 Execution
+
+#### 13.3.1 Engagements
+
+The unit of fieldwork. Data table with a `lifecycle` status chip:
+`Planned` · `In fieldwork` · `In review` · `Reporting` · `Closed`.
+
+**Detail page** layout:
+- **Page header** with engagement code, name, status, `Export audit
+  pack` primary action.
+- **Phase tracker** — a horizontal stepper (§10.6 segmented look, but
+  wider) showing the five phases with check/current/pending states.
+- **Tabs**: `Overview` · `Controls` · `Evidence` · `Findings` ·
+  `Team` · `Timeline` · `Audit trail`.
+- **Overview** card bands show scope, RACM version used, lead auditor,
+  budget vs actual, deadline.
+
+#### 13.3.2 Control Testing
+
+Matrix view: controls × test instances. Each cell shows test status
+(Not started, In progress, Passed, Failed, Needs review).
+
+**Inline test drawer** (right side) when a cell is clicked:
+- Test objective (read-only).
+- Evidence slot — drag-drop zone + list of linked evidence.
+- Test procedure (rich-text).
+- Conclusion (segmented: Pass / Fail / N/A).
+- Notes.
+- `Save draft` + `Submit for review` actions.
+
+**AI assist** (opt-in): a `Draft test steps` ghost button inside the
+drawer opens a small IRA panel that proposes procedure text. Accepts
+on click; user edits freely.
+
+#### 13.3.3 Evidence & Workpapers
+
+A file explorer + a structured evidence ledger. Two views:
+
+1. **Grid view**: 4-column grid of file cards — thumbnail (if image /
+   PDF first page), filename, size, type pill, upload-time.
+2. **Table view**: same data, as §4 DataGrid. Columns include `Linked
+   controls` and `Linked tests` (both as clickable chips).
+
+**Upload zone**: full-width drop target at the top of the page —
+2px dashed `paper-300` border when idle, `brand-600` + `brand-50` tint
+when hovering a drag. Accepts PDF, XLSX, CSV, DOCX, images.
+
+**Chain of custody**: each evidence row has an expandable **trail**
+strip showing `uploaded by → linked to test → approved by → exported`
+as a mini timeline (same vocabulary as §11.7 audit trail).
+
+#### 13.3.4 Findings
+
+The findings tracker is **centralized across sources** (control tests,
+AI runs, external audits). Data table with columns:
+`ID` · `Title` · `Severity` (pill) · `Source` (pill — Test, AI,
+Manual) · `Status` (Open, Remediation, Closed, Accepted risk) ·
+`Owner` · `Due` · `Days open` (tabular).
+
+**Detail drawer** includes:
+- Narrative body (`AIResponse`-style if AI-authored).
+- Evidence links.
+- Remediation plan — an editable mini-kanban (Open → In progress →
+  Verified → Closed) with due dates and assignees.
+- Linked findings (duplicates, related) as pills.
+- Cross-reference to engagement / control / risk / RACM row.
+
+**Manual finding modal** (§10.12 `md`) has the composer form with
+severity, title, narrative, evidence picker, linked entities.
+
+### 13.4 Workflows
+
+#### 13.4.1 Workflow library
+
+A card grid of workflow templates (16 seed + user-created). Each card:
+
+```
+Card (outlined), 280×200, r-lg, no shadow default.
+Icon (40px, r-md brand-50 tile, brand-600 stroke).
+Title (heading-sm, 2-line clamp).
+Description (body-sm, ink-600, 3-line clamp).
+Meta row: category pill + "Used 143 times" in ink-500.
+Hover: shadow-sm, border paper-300.
+```
+
+**Filter bar** (§11.4): search + category chips (`Financial`,
+`Operational`, `IT`, `Compliance`, `Custom`) + advanced filters.
+
+**Clicking a card** opens the workflow at `/workflows/:id` — detail
+page with step visualization + `Run` primary button.
+
+#### 13.4.2 One-Click Audit (OCA)
+
+A specialized workflow that executes all workflows for a business
+process in sequence. Routed from the process detail page.
+
+**Wizard** (4 phases, each a full-screen step):
+
+1. **Scope** — choose business process + which workflows to include
+   (checkbox list).
+2. **Data sources** — select files/data sources per workflow. AI
+   auto-maps columns; manual tag where auto fails.
+3. **Review** — summary of what will run, estimated duration.
+4. **Execute** — progress view (see §13.4.3 Executor) with live
+   findings feed.
+
+**Output** is a consolidated cross-reference report. Find it at
+`/reports/<oca-run-id>`.
+
+#### 13.4.3 Workflow executor
+
+Dedicated page `/workflows/:id/run`. Three-panel:
+
+```
+Input form   │   Progressive execution panel   │   Live findings feed
+(left 320px) │   (center, flex)                │   (right 360px)
+```
+
+- **Input form**: required inputs, file uploads, optional params.
+  `Run` primary button at bottom.
+- **Progressive execution**: step-by-step list (§12.5 progressive
+  loader). Each step expandable to show inputs/outputs.
+- **Live findings feed**: findings appear as rows in real-time,
+  newest on top, with a 200ms slide-in fade. Each row: severity pill +
+  title + source. Click to open finding detail drawer (§13.3.4).
+
+### 13.5 Intelligence
+
+#### 13.5.1 Dashboards
+
+Two variants, both first-class:
+
+1. **Process dashboards** — auto-generated per business process. Layout
+   is fixed: KPI band + risk breakdown + engagement status + control
+   coverage. User can re-skin (hide tiles) but not fundamentally alter.
+2. **Custom dashboards** — user-built via a drag-drop builder. 12-col
+   grid; widget sizes from 3×2 (small KPI) to 12×6 (wide chart).
+
+**Widget types** (catalog): KPI tile, number + sparkline, line chart,
+bar chart, donut, risk heatmap, control coverage bar, findings feed,
+table, AI artifact (from a saved chat response).
+
+**Editing mode**: enters when the `Edit dashboard` primary button is
+pressed. Grid becomes 4px `paper-200` dashed; widgets gain a drag
+handle (top-left) and a delete × (top-right). Click `Done` to exit.
+
+#### 13.5.2 Reports
+
+Reports are **narrative surfaces** — this is the flagship paper
+(§paper-50) canvas application. Three sources:
+
+- **From chat** — save an IRA session or artifact as a report section.
+- **From template** — pick a template (Audit Summary, Board Briefing,
+  Controls Review, Findings Digest), configure via an AI wizard modal.
+- **From builder** — a drag-drop section builder (v1 limited).
+
+**Report reader layout** (§5 Report reader):
+- Serif body toggle (reader preference, persisted).
+- 66ch body cap.
+- Drop cap on section 1 para 1.
+- Inline citations as `code-sm` pills (brand-50 / brand-700).
+- Section breaks: 1px `paper-200` rule, 48px top/bottom margin.
+
+**Report actions** (top-right of header): `Export PDF` (primary,
+triggers the Playwright PDF service), `Export Excel`, `Export DOCX`,
+`Share`.
+
+**Approval chain** (1–3 steps, configurable per report): reviewers
+appear as avatars under the title with their status (pending / approved
+/ rejected / not yet requested). Clicking a pending avatar opens the
+approval modal for that reviewer.
+
+**Rules**:
+
+- **Never** use the cool app canvas (#FCFAFD) for a report surface —
+  reports are always on paper-50. This is the one clearly-differentiated
+  surface in the whole system.
+- **Never** truncate citation links — full text in citation pills,
+  tooltip for long URLs.
+
+#### 13.5.3 AI Concierge — Document Forensics
+
+A specialized upload-and-analyze surface for single documents (contracts,
+invoices, board minutes). Layout: two-column.
+
+Left — file upload zone + page preview (`react-pdf` viewer).
+Right — analysis results tabs: `Summary` · `Entities` · `Risks` ·
+`Key dates` · `Anomalies`. Each entity is a clickable pill that
+highlights its position on the document preview.
+
+#### 13.5.4 AI Concierge — Table Extractor
+
+Takes a PDF or image, returns structured tables. Left: document preview
+with detected table regions outlined in `brand-600 / 0.40`. Right: tab
+strip of extracted tables; active tab shows the table as a §4 DataGrid
+with row-headers preserved. Export to Excel/CSV.
+
+### 13.6 System
+
+#### 13.6.1 Configuration
+
+Data-source management. List of configured sources: DB connections,
+SFTP drops, cloud-storage buckets, file libraries. Each row carries a
+`TestSparkLine` mini-chart of recent ingestion health + a `Test
+connection` ghost action.
+
+#### 13.6.2 Users & Teams
+
+Standard CRUD. User row: avatar + name + email + role pills (multiple
+ok) + team pills + last-active time + status pill (Active, Invited,
+Deactivated).
+
+#### 13.6.3 Roles & Permissions
+
+A **matrix view** — rows are roles (6 built-in + custom), columns are
+capability groups (Governance, Execution, Workflows, Intelligence,
+Admin). Each cell is a multi-checkbox (Read / Write / Approve / Admin).
+
+**Never** use nested accordions here — flat matrix with column filters
+scales best for the seven-persona matrix.
+
+#### 13.6.4 System Settings
+
+One-column form page. Grouped sections: Branding, Data retention,
+Notifications, Integrations defaults, Security. Each section is a
+`Card` (outlined) with inline fields.
+
+#### 13.6.5 Integrations
+
+Cards grid of integrations (Google Workspace, M365, Slack, Teams,
+ServiceNow, Jira). Each card: logo, name, status pill (Connected,
+Disconnected, Error), `Configure` ghost button.
+
+#### 13.6.6 Audit Logs
+
+Read-only data table with filter bar (§11.4) and a fast-jump date
+picker. Columns: `Timestamp` (tabular) · `Actor` · `Action` · `Entity`
+· `IP` · `Result` (severity pill). Clicking a row opens the §11.7
+audit-trail drawer with the full before/after diff.
+
+---
+
+## 14. Roles & personas
+
+Seven personas, each with distinct capabilities. The design system
+respects these capabilities through RBAC (§11.8) — **never** expose
+capabilities a role lacks.
+
+| Role                              | Primary pages                                     | Can                                     | Cannot                                    |
+|-----------------------------------|---------------------------------------------------|-----------------------------------------|-------------------------------------------|
+| **Lead Auditor**                  | Home, Governance, Execution, Reports              | Full CRUD on assigned engagements       | Modify tenant config, manage users        |
+| **Staff Auditor**                 | Execution, Workflows, IRA AI                      | CRUD on assigned controls/tests         | Approve findings, close engagements       |
+| **Audit Manager**                 | Home, Planning, Dashboards, Reports               | Full CRUD, approve/reject, allocate     | Change platform settings                  |
+| **Chief Audit Executive (CAE)**   | Home (KPIs), Dashboards, Reports                  | Read-all, export, present               | Edit governance records                   |
+| **Risk Officer**                  | Governance (Risk, RACM)                           | CRUD on risks/controls                  | Change engagement scope                   |
+| **IT / Data Admin**               | Configuration, Admin                              | System settings, user management        | Approve findings                          |
+| **External Auditor** (read-only)  | Execution (read), Reports (read)                  | View shared items, comment              | Any CRUD, download source data            |
+
+**UI tailoring rules**:
+
+- **Home page** picks a different action-queue composition per role.
+  Lead Auditors see engagement actions first; Risk Officers see new
+  risks; CAE sees board-prep items.
+- **Command palette** (§11.1) scopes its `Pages` section to the role's
+  accessible routes. It never surfaces routes the user can't enter.
+- **External Auditor** chrome: the app sidebar collapses to a single
+  `ReadOnlyBanner` with the shared-item link. No workspace selector.
+  No bell inbox. No ⌘K.
+- **CAE dashboards** get a subtle `paper-50` background (read as
+  "executive reading surface") even though they're inside the app
+  shell — this is the only place the report canvas leaks into the app
+  shell.
+
+---
+
+## 15. Composition recipes — domain patterns
+
+These are **composition recipes**, not new primitives. Each recipe is a
+known-good combination of existing components for a repeat GRC need.
+
+### 15.1 Severity pill + text
+
+The canonical inline severity indicator. Pill (§10.10) + label — no
+icon, no abbreviation.
+
+```tsx
+<Pill tone="error">Critical</Pill>   // risk
+<Pill tone="warning">High</Pill>      // high
+<Pill tone="warning">Medium</Pill>    // mitigated
+<Pill tone="success">Low</Pill>       // compliant
+<Pill tone="info">Info</Pill>         // evidence
+```
+
+### 15.2 Entity reference chip
+
+When an entity (risk, control, finding) is referenced in prose, use:
+
+```tsx
+<EntityChip
+  icon={<Shield size={14} />}
+  id="R-0087"
+  label="Privileged access review stale"
+  href="/governance/risks/R-0087"
+/>
+```
+
+Visual: 24px tall pill-ish (radius `r-sm`), `paper-50` bg, 1px
+`paper-200` border, mono ID in `ink-500`, label in `ink-900 body-sm`,
+icon `ink-500`. Hover: border `paper-300`, bg `paper-0`. This is the
+**only pill** that breaks the no-border rule — because it's an entity
+reference, not a category badge.
+
+### 15.3 KPI tile
+
+Standard card block used across Home and dashboards:
+
+```
+Card (outlined), 240×140, radius r-lg.
+Header: label token uppercase in ink-500 — "OPEN RISKS"
+Metric: display-md serif in ink-900 — "142"
+Sub-metric: body-sm ink-500 with delta glyph — "↑ 12% vs Q4"
+Optional: 40px sparkline, `brand-600` stroke, no fill.
+```
+
+### 15.4 Empty-state variants
+
+Three flavors, picked by context:
+
+- **First-use** — illustration (`paper-300` linework), heading serif
+  ("No risks yet"), body ("Create your first risk or import from an
+  existing RACM."), primary + ghost CTA row.
+- **Filtered-out** — no illustration. Heading `ink-900` sans ("No
+  results match these filters."), body in `ink-500` ("Try widening the
+  date range or clearing the severity filter."), link-variant
+  "Clear all filters" button.
+- **Error** — `AlertCircle` `risk` 32px icon, heading sans ("Something
+  went wrong loading this list."), body with the error code (`ink-500`,
+  mono short hash), `Retry` secondary + `Report issue` ghost.
+
+### 15.5 Confirmation destructive modal
+
+Delete / retire / close actions:
+
+```
+Size: sm (400px), radius r-xl.
+Header: display-sm serif "Delete this engagement?"
+Body: body ink-700 — "You'll lose all linked tests, evidence, and
+      workpapers. This cannot be undone."
+Footer: [Cancel — ghost] [Delete engagement — destructive]
+Extra: optional "Type DELETE to confirm" input for irreversible ops
+       on top-level entities.
+```
+
+### 15.6 Quick-add inline form
+
+Adding a risk / control / finding without leaving the list:
+
+- Inline row appears as the **top row** of the table when `+ Add` is
+  clicked.
+- Row height matches data rows (44/32 by density).
+- Inputs are borderless; on focus, a `brand-600` 2px bottom line
+  appears (signal: "this is the input, not a cell").
+- Save (`⌘↵`) commits and moves to the next row. Escape cancels.
+
+### 15.7 Slide-over detail editor
+
+Used for: control detail, risk detail, finding detail, user detail.
+
+```
+Position: right, full-height, 520px (md) or 720px (lg).
+Radius: r-lg on the left edge only.
+Shadow: shadow-xl.
+Header: title heading-md + close × + breadcrumb above.
+Body: scroll region with tabs (§10.6 underline).
+Footer: sticky, paper-0, 1px paper-200 top. [Cancel] [Save changes].
+```
+
+### 15.8 Status banner
+
+Page-level banners for maintenance, stale data, or consent prompts.
+
+```
+Position: sticky below page header.
+Height: 56px.
+Composition: tone icon (left, 20px) + body (body-sm) + action button
+             (ghost, right-aligned) + close × (optional).
+Tones: info (evidence), warning (mitigated), error (risk), announce
+       (brand — brand-50 bg, brand-700 text, brand-200 border).
+```
+
+**Never** stack more than one banner. If multiple are active,
+prioritize: error > warning > announce > info.
+
+---
+
+## 16. Content voice
+
+The UI is the product's voice. These rules are load-bearing — break
+them only if you can defend the break in a PR description.
+
+### 16.1 Tense & person
+
+- **Imperative for actions**: "Save assessment", "Export report" —
+  not "Saving" or "Will save".
+- **Past for confirmations**: "Saved." not "Save successful."
+- **Present for state**: "3 risks open" — not "3 risks are currently open."
+- **Second person for the user** when addressing: "You have 3 items"
+  not "There are 3 items for the user."
+
+### 16.2 Sentence case, always
+
+- Buttons, menu items, table headers, page titles — sentence case.
+- **Never** Title Case. **Never** ALL CAPS (except `label` token).
+- Proper nouns keep their casing. "SOX", "IRA", "Q1 2026" stay as-is.
+
+### 16.3 Numbers
+
+- Spell out one through nine in body prose ("three risks"), use
+  numerals for ≥10 ("12 findings").
+- Exception: in data contexts (tables, KPIs, chart labels) always
+  use numerals regardless of magnitude.
+- Always use tabular nums (`numeric` token) for numbers in tables
+  and KPIs.
+- Percentages use `%` with no space ("12%" not "12 %"). Currency uses
+  ISO codes for non-USD contexts ("EUR 1,200" not "€1,200" in
+  enterprise views).
+
+### 16.4 Dates
+
+- Display dates as `Apr 28, 2026` by default.
+- Display date-times as `Apr 28, 2026, 14:32 UTC` in audit contexts
+  (never relative — auditors need precision).
+- Use relative ("12 days ago") in ambient/social surfaces: Home,
+  notifications, activity feeds. Pair with an absolute date in the
+  `title=` / tooltip.
+
+### 16.5 Severity language
+
+- Spell severity out: `Critical`, `High`, `Medium`, `Low`, `Info`.
+- When combined with counts: "3 critical findings" — lowercase
+  severity inside a sentence; capitalized only when used as a pill label.
+- Avoid: `Crit.`, `Hi`, `red-flag`, `blocker`, `P0`. The canon is the
+  five words above.
+
+### 16.6 AI voice
+
+- IRA speaks in the **first person singular** when responding: "I
+  found…", "I'll need to know…", "I can't answer that without more
+  context."
+- IRA **never apologizes in excess** — one "sorry" per turn, max, and
+  only when the failure is IRA's (not the user's).
+- IRA **never refers to itself as "AI" or "the assistant"**. Say "IRA"
+  or "I".
+- IRA **never hedges with "it seems" or "probably"** when the data is
+  clear. Hedge only when the data is genuinely ambiguous.
+- When IRA doesn't know, it says so in one sentence + the next best
+  step: "I don't see an approved Q1 control set for this process. You
+  can import one from the 2025 RACM, or I can draft a starter set from
+  the SOP."
+
+### 16.7 Error messages
+
+- **Never** expose stack traces or internal IDs by default. Short code
+  OK in small text.
+- Structure: what happened (one sentence) + what to do (one sentence).
+- "We couldn't load your findings. Retry, or reach out to your admin if
+  this keeps happening." — not "Error: 500 Internal Server Error at
+  /findings endpoint".
+
+---
+
 ## License & attribution
 
 This `DESIGN.md` is the canonical specification for the design system.
@@ -1119,3 +2366,7 @@ Format inspired by the `getdesign.md` 9-section convention. Tuned for
 GRC SaaS; assumes React 19 + Tailwind v4 + shadcn/ui + Radix primitives.
 
 _Last refined: 2026-04-23 — dark sidebar + cool canvas app shell; paper tokens re-roled for report surfaces._
+_Expanded: 2026-04-23 — §§11–16 added: cross-cutting patterns, AI surfaces,
+domain patterns, personas, composition recipes, content voice. Pulled
+from the Auditify/IRA platform (github.com/tech-irame/auditify-revamp)
+as the reference consumer._
