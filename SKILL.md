@@ -37,9 +37,25 @@ DESIGN.md as the source of truth when they conflict.
 --brand-900: #26064A;  /* anchor: display, dark canvas */
 --brand-950: #170330;
 
-/* Warm paper + ink */
+/* App canvas (chrome surfaces — dashboards, data, workflows) */
+--canvas:          #FCFAFD;  /* app body bg — brand-600 at ~2% on white */
+--canvas-elevated: #FFFFFF;  /* cards / modals on canvas */
+--canvas-border:   #F0EAF6;  /* subtle card border on canvas */
+
+/* Sidebar (dark shell — anchored to brand-900 every theme) */
+--sidebar-bg:             #26064A;                    /* brand-900 */
+--sidebar-border:         rgba(255 255 255 / 0.08);
+--sidebar-text:           rgba(255 255 255 / 0.85);
+--sidebar-text-dim:       rgba(255 255 255 / 0.55);
+--sidebar-text-muted:     rgba(255 255 255 / 0.45);
+--sidebar-surface:        rgba(255 255 255 / 0.06);
+--sidebar-surface-hover:  rgba(255 255 255 / 0.08);
+--sidebar-surface-active: rgba(255 255 255 / 0.12);   /* distinct from hover */
+--sidebar-accent:         #FFFFFF;
+
+/* Warm paper + ink (report surfaces only — reader, PDF, narrative) */
 --paper-0:   #FFFFFF;
---paper-50:  #FAF7F2;  /* LIGHT CANVAS — body bg */
+--paper-50:  #FAF7F2;  /* REPORT CANVAS — reader mode only */
 --paper-100: #F3EEE5;
 --paper-200: #E8E1D2;
 --paper-300: #D6CCB7;
@@ -60,7 +76,8 @@ DESIGN.md as the source of truth when they conflict.
 --info:      #6A12CD;  /* Info (brand-tied) */
 --draft:     #6B5D82;  /* Draft / Muted / Default */
 
-/* Dark canvas = #12081E, dark ink = #F1EDE3 */
+/* Dark mode: canvas + report unify to #12081E, ink #F1EDE3. Sidebar
+   stays brand-900 (#26064A) — it's always dark, every theme. */
 ```
 
 ### Typography
@@ -92,6 +109,13 @@ Borders first, shadows sparingly, tint never. Focus ring =
 
 ---
 
+## App shell at a glance
+
+- **Dark sidebar** (256px, `brand-900`) anchors every screen. White-opacity text scale, 3px white left bar on active items, weight-600 label. Every sidebar value comes from a `sidebar-*` token — never raw `rgba(255,255,255,x)`.
+- **No topbar.** Global chrome lives in the sidebar. Page chrome is the first content row: **breadcrumb → title → context chips → actions**. Serif title for narrative pages, sans for registry/task pages.
+- **Canvas by role** — app canvas `#FCFAFD` for dashboards/data/workflows; report canvas `#FAF7F2` (paper-50) for reader mode and PDFs only.
+- **32px page padding.** Never 28.
+
 ## Always
 
 - **Use serif for narrative hero** (reports, dashboard headline, AI response context). Everything else = Inter.
@@ -108,7 +132,9 @@ Borders first, shadows sparingly, tint never. Focus ring =
 ## Never
 
 - **Never use** pure `#FF0000`, `#FFA500`, `#00FF00` — use the GRC semantic scale.
-- **Never put** `brand-600` on small body text over `paper-50` (~4.0:1). Use `brand-700` for text.
+- **Never put** `brand-600` on small body text over `canvas` or `paper-50` (~4.0:1). Use `brand-700` for text.
+- **Never write** raw `rgba(255,255,255, …)` in sidebar code — compose from `--sidebar-*` tokens.
+- **Never break the 8pt grid** on page padding — use 24 or 32, never 28 or 20.
 - **Never use** drop-shadows decoratively on cards, buttons, or sidebars.
 - **Never animate** for decoration. No hover-bounce. No scroll-reveals.
 - **Never center** body paragraphs outside of hero moments.
