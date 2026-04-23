@@ -128,6 +128,14 @@ Borders first, shadows sparingly, tint never. Focus ring =
 - **Ship both densities** — every table must work at 32px row height.
 - **Show AI thinking honestly** — pulse dots during generation, caret while streaming, timestamp when done.
 - **Pills are flat**: tinted bg + label text. **No border. No icon.**
+- **Native element first**: `<button>`, `<a>`, `<label for>`, `<nav>`, `<main>`, `<table>` — before any `<div role=...>`.
+- **`cursor: pointer`** on every clickable surface.
+- **`aria-label`** every icon-only button; icons themselves `aria-hidden="true"`.
+- **Skeleton > spinner** for anything larger than a button (§10.14).
+- **Skip link** first on every page — "Skip to main content" → `#main`.
+- **Shadcn Form + RHF + Zod** for any form over 3 fields (§4 Input + §17.4). `FormLabel` + `FormMessage` — never placeholder-only, never custom error text outside `FormMessage`.
+- **Four-channel rule for charts**: color + at least one of position / shape / text. Every chart carries a `<table>` fallback.
+- **Z-index from the scale** (§17.7): `z-raised`(10) / `z-sticky`(20) / `z-overlay`(30) / `z-modal`(50) / `z-toast`(60) / `z-palette`(70). No `z-[9999]`.
 
 ## Never
 

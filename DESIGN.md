@@ -165,6 +165,19 @@ design review.
 **Sequential scale (utilization, 5-stop)**:
 `#F7F0FF → #DCBBFD → #A366F0 → #6A12CD → #3B0B72`.
 
+**Data-viz accessibility** (full spec in §18):
+
+- **Color is never the only channel.** Every chart encodes on at least
+  two of: color · position · shape/pattern · text (value label or
+  legend). Required combinations per chart type live in §18.1.
+- **SVG charts** get a `role="img"` (or `role="group"` when
+  interactive) + `aria-labelledby` pointing at the chart's `<figcaption>`.
+- **Every chart** is accompanied by a `<details><summary>View as table</summary><table>…</table></details>`
+  fallback — the `<table>` is the source of truth for screen readers.
+- Under `prefers-contrast: more`, severity colors layer a pattern
+  overlay (diagonal stripes for Critical, cross-hatch for High, etc.
+  — see §18.4).
+
 ### Color opacity scale
 
 Alpha tokens applied to ink or brand when semantic color alone is too loud
@@ -303,6 +316,37 @@ disabled→ background paper-100, color ink-400
 
 Never use a shadow for input focus. The brand ring is the signal.
 
+**The shadcn Form + RHF + Zod contract.** Any form over three fields
+must use this pattern. It wins accessibility (label ↔ input ↔ message
+association), type safety, and consistent server-error landing in one
+surface. Full spec in §17.4 — the short version:
+
+```tsx
+<Form {...form}>
+  <FormField
+    control={form.control}
+    name="riskId"
+    render={({ field }) => (
+      <FormItem>
+        <FormLabel>Risk ID</FormLabel>
+        <FormControl><Input {...field} /></FormControl>
+        <FormDescription>Use the registry ID, not the display name.</FormDescription>
+        <FormMessage />
+      </FormItem>
+    )}
+  />
+</Form>
+```
+
+Rules (full details §17.4):
+- Always `FormLabel` (renders `<label htmlFor>`) — never placeholder-only.
+- Always `FormMessage` for errors (renders with `role="alert"` and
+  `aria-errormessage`). Custom validation text outside `FormMessage`
+  does not announce.
+- Always Zod schema via `zodResolver` — don't hand-roll validators.
+- On submit failure, focus moves to the first invalid field; the form
+  header gets a `role="alert"` summary listing the fields.
+
 ### Card
 
 ```
@@ -403,6 +447,28 @@ well-designed news app. If multiple responses stack, separate with a
   otherwise.
 - Body: body, ink-500, 2 sentences max.
 - CTA: secondary button for the primary action.
+
+### Skeleton (loading placeholder)
+
+```
+background: paper-100 (light) / ink-700 (dark)
+radius: inherit from the element it stands in for
+       (text skeleton r-sm; avatar skeleton r-full; card skeleton r-lg)
+animation: shimmer — linear-gradient sweeps left→right, 1.6s cubic-bezier
+           (0.4, 0, 0.2, 1), infinite. Disabled under `prefers-reduced-motion`.
+aria: wrap in <div role="status"><span className="sr-only">Loading …</span></div>
+```
+
+**When to skeleton vs spin**:
+
+- **Skeleton** for any surface larger than a button — cards, rows,
+  tiles, charts, chat messages, artifact panels.
+- **Spinner** only inside a button, input, or an inline `16–20px`
+  status marker.
+- **Never** skeleton for <150ms expected loads — the flicker is worse
+  than nothing.
+
+See §10.14 for sizes.
 
 ---
 
@@ -637,6 +703,16 @@ surfaces remain perceptible against near-black.
   users live there.
 - **Show AI thinking honestly.** Pulse dots during generation; cursor while
   streaming; timestamp when done. Don't fake streaming on static text.
+- **Add `cursor: pointer`** to every clickable surface — cards, rows,
+  pills-as-filters, file uploads. The pointer is a promise. `<button>`
+  and `<a>` already carry it; manual `onClick` handlers don't.
+- **Label every icon-only button** with `aria-label`. The Lucide icon
+  gets `aria-hidden="true"`. See §17.2 for the full ARIA table.
+- **Reach for the native element first.** `<button>`, `<a>`, `<nav>`,
+  `<main>`, `<table>`, `<label for>` — before any `div` + `role`.
+- **Skeleton anything larger than a button.** Spinners inside buttons
+  and tiny inline status markers; skeletons for cards, rows, tiles,
+  charts, chat messages. See §10.14.
 
 ### Don't
 
@@ -661,6 +737,21 @@ surfaces remain perceptible against near-black.
   indicator and move on.
 - **Don't create a new component when a primitive composed does the job.**
   A "RiskPill" is just a `Badge` with a severity variant.
+- **Don't shift layout on hover.** Transition `color`, `background`,
+  `border`, `box-shadow`, `opacity` — never `width`, `height`,
+  `padding`, `margin`, or `scale` that changes layout. Sibling
+  elements must not move when one is hovered.
+- **Don't use `outline: none` without replacement.** If you need to
+  remove the default outline (because you're drawing your own focus
+  ring), you own the replacement. `focus-visible:ring-…` from the
+  glow-brand token is the default.
+- **Don't raw `z-index`.** Every z-index must resolve to a token from
+  §17.7. No `z-[9999]`, no `z-50` sprinkled on a card.
+- **Don't reach for `div role="button"`** when `<button>` exists.
+  `role` is a fallback, not a first choice. See §17.1.
+- **Don't disable the submit button to "hint" at validation.** Let it
+  submit, catch the errors, focus the first invalid field. Disabling
+  hides *why* the user can't continue.
 
 ---
 
@@ -1189,6 +1280,59 @@ surface truly needs more):
 
 Sizes: use §3.4 icon-size tokens. All icons inherit `currentColor`. Never
 set `fill=` on a Lucide SVG.
+
+### 10.14 Skeleton
+
+Loading placeholder. Not a decorative element — it's an accessibility
+primitive. Must match the height and approximate width of what it stands
+in for, so page layout doesn't jump when real content arrives.
+
+**Sizes** (match the content they replace):
+
+| Use                                    | Dimensions                               | Radius  |
+|----------------------------------------|------------------------------------------|---------|
+| Text line (`body`)                      | h-4 (16px), width varies 40–100%          | `r-sm` (6) |
+| Text line (`body-sm`)                   | h-3.5 (14px), width varies                | `r-sm`  |
+| Heading (`heading-md`)                  | h-5 (20px), width 40–70%                  | `r-sm`  |
+| Display (`display-sm`)                  | h-8 (32px), width 40–60%                  | `r-sm`  |
+| Avatar (32)                             | 32×32                                     | `r-full` |
+| Avatar (40)                             | 40×40                                     | `r-full` |
+| Pill                                    | h-6 (24px), width 64px                    | `r-full` |
+| Input                                   | h-10 (40px), full-width                   | `r-md` (8) |
+| KPI tile block                          | 240×140                                   | `r-lg` (12) |
+| Card block                              | matches the card it replaces              | `r-lg`  |
+| Chart area                              | matches the chart viewport                | `r-lg`  |
+| Table row (comfortable)                 | h-11 (44px), per-column widths            | `r-sm`  |
+| Table row (compact)                     | h-8 (32px)                                | `r-sm`  |
+
+**Appearance**:
+
+- Base: `paper-100` (light) / `ink-700` (dark).
+- Shimmer: linear-gradient from base through `paper-0/60` (light) /
+  `ink-600` (dark) back to base, 1.6s standard ease, infinite
+  translate-x from −100% to 100%. Disabled under
+  `prefers-reduced-motion`.
+
+**Composition recipes**:
+
+- **Card skeleton**: header line (h-5, 60%) + 2 body lines (h-4, 100%
+  and 80%) + 1 sub-metric line (h-3.5, 40%). Gap 12.
+- **Row skeleton**: one cell per column; `flex-1` or explicit widths
+  matching the real column.
+- **Chart skeleton**: axis lines (§2 alpha-10) + a muted `paper-100`
+  silhouette following the expected shape.
+- **Chat message skeleton**: `AIResponse`-shell with gradient border +
+  3 body-lg text lines (100% / 80% / 60%).
+
+**Accessibility**:
+
+- Wrap the skeleton region in `<div role="status">` with a
+  visually-hidden `<span className="sr-only">Loading …</span>`
+  describing what's coming ("Loading risks", "Loading Q1 dashboard").
+- Skeleton elements themselves carry `aria-hidden="true"`.
+- When the real content arrives, remove the skeleton **and** update
+  the status message to "Loaded" or move focus to the new heading if
+  appropriate.
 
 ---
 
@@ -2356,6 +2500,325 @@ them only if you can defend the break in a PR description.
 
 ---
 
+## 17. Accessibility, semantics, and performance
+
+WCAG AA is a **contractual constraint** — GRC buyers carry accessibility
+clauses in procurement. This section is the system-level contract that
+every component in §§4, 10, 12, 13, 15 must satisfy. If a pattern in
+those sections contradicts §17, §17 wins.
+
+### 17.1 Semantic HTML first
+
+Always reach for the native element before wrapping a `div`. Shadcn
+components already do this — the rule is *don't un-do* it.
+
+| Use                                     | Not                                                 |
+|-----------------------------------------|-----------------------------------------------------|
+| `<button>`                              | `<div role="button" onClick>`                       |
+| `<a href>`                              | `<div onClick={navigate}>`                          |
+| `<nav>`, `<main>`, `<aside>`, `<header>`, `<footer>` | `<div>` soup                                        |
+| `<label for="…">` + `<input id="…">`     | Placeholder-only inputs                             |
+| `<table>` + `<thead>`/`<tbody>`/`<th>`   | Divs with grid CSS (OK for TanStack Table but must carry `role="grid"` + `role="row"` + `aria-colindex`) |
+| `<section aria-labelledby="…">`          | `<section>` with no label when it's a landmark      |
+
+**Rules**:
+
+- **Page-level landmarks**: every page has exactly one `<main>` (the
+  content panel), one `<nav>` per nav region (sidebar, in-page tab bar),
+  a footer only on reports. The app sidebar is a single `<nav aria-label="Primary">`.
+- **Skip link** — the first focusable element on every page is a
+  visually-hidden-until-focused `Skip to main content` link that jumps
+  to `#main`. Required because the sidebar has many nav items.
+- **Heading hierarchy**: one `<h1>` per page (the page-header title).
+  Don't skip levels — going `<h1>` → `<h3>` breaks screen-reader TOC.
+
+### 17.2 ARIA (only when semantics aren't enough)
+
+| Situation                                                 | Pattern                                                                                     |
+|-----------------------------------------------------------|---------------------------------------------------------------------------------------------|
+| Icon-only button                                          | `aria-label="Close menu"` on the `<button>`; the Lucide icon gets `aria-hidden="true"`      |
+| Decorative icon inside a labelled surface                  | `aria-hidden="true"` on the icon, label comes from the surrounding button/link text         |
+| Async status (streaming AI, workflow run, upload progress) | Live region: `<div aria-live="polite" aria-atomic="true">` outside the DOM reflow path     |
+| Form-level error summary                                  | `role="alert"` on the summary container; autofocus the first invalid field                  |
+| Streaming AI caret                                         | Caret element `aria-hidden="true"` so the streaming text isn't polluted by "blinking cursor" announcement |
+| Modal / dialog                                             | Radix `Dialog` handles it: `role="dialog"`, `aria-modal="true"`, focus trap, `Esc` to close, focus returns to trigger |
+| Toast (non-interrupting)                                   | `aria-live="polite"` for info/success, `aria-live="assertive"` for error                    |
+| Loading spinner                                           | Wrap in `<span role="status">` with a visually-hidden label — "Loading risks…"              |
+| Table sort                                                | `aria-sort="ascending \| descending \| none"` on the active `<th>`                         |
+| Expanded/collapsed row                                    | `aria-expanded` on the trigger; `aria-controls` pointing at the disclosed panel's id        |
+| Selected multi-select pill                                | `aria-pressed="true"` on the toggle-chip button                                             |
+
+**Rules**:
+
+- **Never** put `aria-label` on something that already has a visible
+  label — it silently **overrides** the visible text for screen readers.
+- **Never** announce severity by color alone (§2 already rules this); a
+  pill's label text is its ARIA name automatically.
+- **Never** use `role="alert"` for non-urgent content — it interrupts
+  the screen reader mid-sentence. Use `aria-live="polite"` for most
+  things; reserve `assertive`/`alert` for blockers.
+
+### 17.3 Keyboard navigation
+
+Every interactive pattern must survive a no-mouse audit. Run the full
+app with the pointer physically disconnected once per release.
+
+**Global contract**:
+
+- Tab order matches **visual** reading order — top→bottom, left→right
+  (English / LTR). Don't use positive `tabindex` to shuffle; use DOM
+  order.
+- `Esc` closes any overlay (modal, popover, palette, drawer). The
+  closing surface returns focus to the element that opened it.
+- Focus ring is the `glow-brand` token (§6). **Never** `outline: none`
+  without an equally-visible replacement.
+
+**Per-pattern**:
+
+| Pattern                   | Keys                                                                                    |
+|---------------------------|-----------------------------------------------------------------------------------------|
+| Command palette (§11.1)   | `⌘K` open · `↑/↓` move · `↵` open · `⌘↵` new tab · `Esc` close · `Tab` to footer hints |
+| Data table (§4)           | `↑/↓` row · `←/→` column · `⌘↑/⌘↓` page jump · `Space` toggle select · `↵` open row    |
+| Underline tabs (§10.6)    | `←/→` move selection · `Home/End` first/last · `↵` or auto-focus on selection           |
+| Segmented tabs (§10.6)    | same as underline tabs                                                                  |
+| Dropdown menu (§10.3)     | `↑/↓` move · `↵` select · `Esc` close · typeahead letters jump                          |
+| Select (§10.4)            | `↑/↓` move · `↵` select · letters typeahead                                            |
+| Date picker (§10.5)       | arrow keys day · `PgUp/PgDn` month · `Shift+PgUp/Dn` year · `Enter` select             |
+| Dialog (§10.12)           | Radix-default focus trap · `Esc` close                                                  |
+| Drawer / slide-over (§15.7) | `Esc` close · Tab cycles within drawer                                                  |
+| Toast (§10.9)             | `F8` moves focus into notification region (OS hook); each toast tabbable                |
+| Chart (§2 viz)            | Arrow keys move cursor between data points · `↵` opens detail · provides table fallback |
+
+**Rules**:
+
+- **Never** trap keyboard focus inside a non-modal surface. Only
+  `Dialog`, `Sheet`, and `CommandPalette` trap; the rest let `Tab`
+  escape.
+- **Never** intercept `Tab` to perform app actions. `Tab` is sacred.
+
+### 17.4 Forms
+
+The shadcn Form + react-hook-form + Zod pattern is mandatory for any
+form over three fields. It wins four things at once: type-safe values,
+declarative validation, automatic accessible error association, and a
+single place for server errors to land.
+
+```tsx
+const schema = z.object({
+  riskId: z.string().min(1, "Required."),
+  severity: z.enum(["critical", "high", "medium", "low"]),
+});
+
+const form = useForm<z.infer<typeof schema>>({
+  resolver: zodResolver(schema),
+});
+
+<Form {...form}>
+  <FormField
+    control={form.control}
+    name="riskId"
+    render={({ field }) => (
+      <FormItem>
+        <FormLabel>Risk ID</FormLabel>
+        <FormControl>
+          <Input leftIcon={<Search size={16} />} {...field} />
+        </FormControl>
+        <FormDescription>Use the registry ID, not the display name.</FormDescription>
+        <FormMessage />
+      </FormItem>
+    )}
+  />
+</Form>
+```
+
+**What this guarantees for accessibility**:
+
+- `<FormLabel>` renders `<label htmlFor={id}>`; `<FormControl>`
+  receives the same `id`. Screen readers associate them automatically.
+- `<FormDescription>` is linked via `aria-describedby`.
+- `<FormMessage>` renders with `role="alert"` when the field is
+  invalid and is linked via `aria-errormessage`. **Never** render
+  custom validation text outside `FormMessage` — it won't announce.
+
+**Error placement**:
+
+- Inline `FormMessage` directly below the field (default) — `body-sm`,
+  `risk` color, `AlertCircle` 14px icon left-inline.
+- Plus a **form-level summary** at the top of the form when the user
+  submits and validation fails: `role="alert"`, `risk-50` bg,
+  `AlertOctagon` icon, list of fields with anchor links that focus the
+  offending input.
+
+**Rules**:
+
+- **Never** disable the submit button until the form is valid — it
+  hides *why* the user can't submit. Let it be clickable; validation
+  runs on submit, focus moves to the first invalid field.
+- **Never** rely on browser-native tooltips for error text — they
+  aren't announced and don't match the system's typography.
+- **Never** clear a filled field after a server error. Preserve
+  values; show the error; let the user edit.
+
+### 17.5 Async content: skeletons, live regions, loading buttons
+
+**Skeletons over spinners for anything larger than a button.** A
+spinner tells the user "wait"; a skeleton tells them "this is what's
+coming." GRC pages carry high information density — skeletons preserve
+scroll position and page rhythm.
+
+- Table: render header row + 8 placeholder rows with `Skeleton` cells
+  (see §10.14).
+- Card: render header + 2 text-line skeletons + sub-metric skeleton.
+- Chart: render the axis + a muted area silhouette; animate the
+  shimmer only if `prefers-reduced-motion: no-preference`.
+
+**Loading buttons**: already defined in §10.1 — spinner in `paper-0`
+color, **label stays visible** ("Saving…", not "…"), `pointer-events:
+none`, `aria-busy="true"`. Never replace the label with an ellipsis.
+
+**Aria-live wrapping**: the conversation column, the live findings
+feed, and toast region each sit inside their own `aria-live="polite"
+aria-atomic="false"` wrapper. The rest of the page is static to the
+screen reader.
+
+### 17.6 Performance contract
+
+| Concern                      | Rule                                                                                         |
+|------------------------------|----------------------------------------------------------------------------------------------|
+| Font loading                 | `font-display: swap` on all three faces (Inter / Source Serif 4 / JetBrains Mono). Self-host + preload the two most-used weights (Inter 400, 600) |
+| Image optimization           | Evidence thumbnails, avatars, report figures: WebP with AVIF fallback + `srcset` for 1×/2×. `loading="lazy"` below-the-fold |
+| Virtualization threshold     | Any list >50 rows uses `@tanstack/react-virtual` or equivalent. Risk Register, Control Library, Findings, Audit Logs, chat message list all pre-meet this threshold |
+| React Compiler               | Enabled project-wide (per `CLAUDE.md` §1.1). Don't add `memo`/`useMemo` manually unless profiling demands it |
+| Bundle splitting             | Each route is a separate chunk (App Router default). Artifact panel, Report reader, AI Concierge tools are deferred — dynamic-import when the route opens |
+| CLS (layout stability)       | Always reserve space for async content (skeleton dimensions must match real content height). AI streaming output grows from the bottom — reserve the `Result` container's min-height so the surrounding layout doesn't jump |
+| Motion budget                | No continuous animation (no permanent pulses, marching ants, rotating gradients). State-transition only (§5 motion) |
+| Streaming chart pause        | Any real-time chart has a visible **Pause stream** button — required for `prefers-reduced-motion` users and for cognitive-load accessibility |
+
+### 17.7 Z-index scale
+
+An explicit numeric scale prevents the `z-index: 9999` arms race. Only
+these values are legal. Anything else is a bug.
+
+| Token         | Value | Use                                                                 |
+|---------------|-------|---------------------------------------------------------------------|
+| `z-base`      | 0     | Default flow                                                         |
+| `z-raised`    | 10    | Sticky page-header row, sticky table filter bar, sticky table header |
+| `z-sticky`    | 20    | Sticky table column (first column pinned), sticky action bar         |
+| `z-overlay`   | 30    | Popover, dropdown menu, select popover, tooltip                      |
+| `z-modal`     | 50    | Dialog / drawer scrim + content                                      |
+| `z-toast`     | 60    | Toast stack (sonner default)                                         |
+| `z-palette`   | 70    | Command palette (above toasts; intentionally wins focus)              |
+| `z-notification-toast` | 70 | Escalated from `z-toast` when an error toast must not be occluded |
+| `z-devtools`  | 9999  | Only for dev/storybook overlays — **never** in production code       |
+
+**Rule**: `z-index` must always reference a token from this table.
+Raw numeric `z-index` on a component is a lint violation.
+
+### 17.8 High-contrast / reduced-motion / forced-colors
+
+The system already respects `prefers-reduced-motion` (§7). Complete
+the triangle:
+
+- **`prefers-contrast: more`** — bump all `ink-500` to `ink-700`,
+  `paper-200` to `paper-300`, and every pill's text weight to 640.
+  These swaps are deterministic — implement as a CSS media block.
+- **`forced-colors: active`** (Windows High Contrast) — let the OS
+  take over colors but keep layout intact. Don't use background images
+  for meaningful UI (status icons must be real SVG, not `background:
+  url(…)`).
+- **Focus ring** — in `forced-colors`, the `glow-brand` ring collapses
+  to `outline: 3px solid Highlight`. The purple disappears but the
+  shape stays.
+
+### 17.9 Internationalization readiness
+
+Per CLAUDE.md: i18n-ready, RTL deferred to v2.
+
+- All copy originates in a single strings module (`copy.ts` per
+  feature). No inline strings in JSX beyond `label` and `aria-label`.
+- All labels accept number and date formatter args — never concatenate
+  ("3 findings" is `t("findings.count", { n: 3 })`, not `` `${n} findings` ``).
+- CSS writes to **logical** properties where layout matters:
+  `padding-inline-start` over `padding-left`, `margin-inline-end` over
+  `margin-right`. This is the seam that makes the RTL flip painless in
+  v2.
+
+---
+
+## 18. Data visualization accessibility
+
+Charts are the hardest accessibility surface in a GRC product — they
+carry the most information and the fewest affordances for assistive
+tech. Every chart shipped by this system follows the four-channel
+rule.
+
+### 18.1 Four-channel rule
+
+Encode data on **at least two** of these four channels. Color is
+**never** the only channel.
+
+| Channel   | Examples                                                    |
+|-----------|-------------------------------------------------------------|
+| Color     | Series color, severity hue, heat intensity                  |
+| Position  | Bar length, scatter X/Y, line altitude                      |
+| Shape / pattern | Series marker (circle / square / diamond / cross), stripe overlay on heatmap cells, dashed vs solid for forecast vs actual |
+| Text      | Value label on bar, tooltip number, legend label             |
+
+**Required combinations by chart type**:
+
+| Chart              | Required channels                                                 |
+|--------------------|-------------------------------------------------------------------|
+| Bar / column        | Position + Text (value label either above or right-aligned)       |
+| Line                | Position + Text (endpoint label) + Shape on markers when overlapping |
+| Donut / pie         | Text (% label) + Legend with text; shapes not needed               |
+| Risk heatmap (§13.2.4) | Color (diverging scale) + Text (count) + Pattern (optional stripe on Critical cells for `prefers-contrast: more`) |
+| Forecast            | Solid line actual + Dashed line forecast + Shaded confidence band + Legend text |
+| Real-time streaming | Color + Text (current value, fading trail) + Pause button          |
+
+### 18.2 Screen-reader fallback
+
+Every `<svg>` chart is accompanied by a **data table**, hidden by
+default but reachable via a "View as table" link-variant button
+immediately below the chart. The table is real `<table>` with `<th
+scope="col">` headers and captions.
+
+```tsx
+<figure role="group" aria-labelledby="c1-title">
+  <figcaption id="c1-title">Open findings by severity, Q1 2026</figcaption>
+  <svg aria-describedby="c1-table" focusable="false">…</svg>
+  <details>
+    <summary>View as table</summary>
+    <table id="c1-table">…</table>
+  </details>
+</figure>
+```
+
+### 18.3 Chart interaction keyboard contract
+
+- Focus enters the chart via `Tab`; arrow keys traverse data points.
+- `↵` opens the detail view for the focused point.
+- `Esc` releases focus back to page flow.
+- Focused data point carries a 2px `brand-600` ring and a tooltip
+  that is also announced via `aria-live="polite"`.
+
+### 18.4 Pattern overlay tokens (high-contrast mode)
+
+When `prefers-contrast: more` is active, these SVG patterns layer over
+the severity/risk colors for redundant encoding:
+
+| Severity  | Pattern                                    |
+|-----------|--------------------------------------------|
+| Critical  | Diagonal stripes, 45°, 2px dark on tint    |
+| High      | Cross-hatch, 4px, 1px dark on tint         |
+| Medium    | Dotted, 2px, 3px spacing                   |
+| Low       | Solid fill (no pattern — already low-contrast-safe) |
+| Info      | Horizontal stripes, 3px, 4px spacing        |
+
+Patterns live as `<pattern>` defs in a shared SVG sprite at
+`/assets/patterns.svg` and are applied via `fill="url(#pattern-critical)"`.
+
+---
+
 ## License & attribution
 
 This `DESIGN.md` is the canonical specification for the design system.
@@ -2370,3 +2833,7 @@ _Expanded: 2026-04-23 — §§11–16 added: cross-cutting patterns, AI surfaces
 domain patterns, personas, composition recipes, content voice. Pulled
 from the Auditify/IRA platform (github.com/tech-irame/auditify-revamp)
 as the reference consumer._
+_Reviewed: 2026-04-23 — §§17–18 added after ui-ux-pro-max audit: systematic
+accessibility (ARIA / keyboard / forms / semantics), performance contract
+(font-display / virtualization / z-index scale), and chart-accessibility
+four-channel rule._

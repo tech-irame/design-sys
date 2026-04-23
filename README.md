@@ -19,16 +19,21 @@ design-sys/
 
 `DESIGN.md` covers: §1 theme · §2 color · §3 typography · §4 components
 · §5 layout · §6 elevation · §7 do/don't · §8 responsive · §9 agent
-prompts · §10 per-component state matrices · **§11 cross-cutting
-patterns** (⌘K, workspace, share, filter bar, notifications, comments,
-audit trail, RBAC) · **§12 AI / IRA surfaces** (three-panel chat,
-artifact panel, clarification chips, assumptions, progressive loader,
-workflow builder canvas) · **§13 domain surfaces** (Home, Governance,
-Execution, Workflows, Intelligence, System — the 24-page IA) · **§14
-roles & personas** (7 personas with RBAC tailoring) · **§15
-composition recipes** (EntityChip, KPI tile, empty states, destructive
-modal, slide-over editor, status banner) · **§16 content voice** (tense,
-sentence case, numbers, dates, severity language, AI voice, errors).
+prompts · §10 per-component state matrices (incl. `Skeleton` §10.14)
+· **§11 cross-cutting patterns** (⌘K, workspace, share, filter bar,
+notifications, comments, audit trail, RBAC) · **§12 AI / IRA surfaces**
+(three-panel chat, artifact panel, clarification chips, assumptions,
+progressive loader, workflow builder canvas) · **§13 domain surfaces**
+(Home, Governance, Execution, Workflows, Intelligence, System — the
+24-page IA) · **§14 roles & personas** (7 personas with RBAC tailoring)
+· **§15 composition recipes** (EntityChip, KPI tile, empty states,
+destructive modal, slide-over editor, status banner) · **§16 content
+voice** · **§17 accessibility, semantics, performance** (semantic HTML,
+ARIA matrix, keyboard contract, shadcn Form + RHF + Zod, skeletons,
+font-display, virtualization, z-index scale, `prefers-contrast`,
+`forced-colors`, i18n readiness) · **§18 data-viz accessibility**
+(four-channel rule, `<table>` fallback, pattern overlays for
+high-contrast mode).
 
 The design language in one line:
 **Editorial premium in a domain that's been corporate for too long.**
