@@ -240,6 +240,14 @@ Figma / design-tool parity.
 
 ### Rules
 
+- **rem only, never px.** Font sizes are **always declared in `rem`**. If a
+  size comes in as px, convert it before use — `rem = px ÷ 16` (root is 16px).
+  px may appear only as a parenthetical reference for design-tool parity,
+  never in code. Keeps type responsive to the user's browser font-size and on
+  the `0.25rem` (4px) base grid. Map: `12px → 0.75rem`, `16px → 1rem`,
+  `20px → 1.25rem`, `24px → 1.5rem`, `28px → 1.75rem`, `32px → 2rem`,
+  `36px → 2.25rem`, `40px → 2.5rem`, `48px → 3rem`, `56px → 3.5rem`. The shipped
+  Auditify ladder is §20.8.
 - **Serif is a character beat, not a default.** Use display-* only for
   narrative headers (reports, dashboards, AI responses, section hero).
   Primary page chrome, tables, and forms are all Inter.
@@ -2816,6 +2824,353 @@ the severity/risk colors for redundant encoding:
 
 Patterns live as `<pattern>` defs in a shared SVG sprite at
 `/assets/patterns.svg` and are applied via `fill="url(#pattern-critical)"`.
+
+---
+
+---
+
+## 19. Reference Implementation — Surface Map (Auditify)
+
+The sections above are product-agnostic. This appendix shows how the system
+lands on a **real** application — Auditify, the GRC copilot — so you can see
+which component plays which role on each screen. Treat the component/file
+names as a reference, not as required structure; the *patterns* (composer,
+AIResponse, DataGrid, severity pills, paper report) are what generalize.
+
+Each surface lists every component it renders, its source file, and the
+tokens/patterns it uses. Exact class strings below are pulled verbatim from
+source. The **canonical, fully exploded per-component spec lives in the
+product repo's `DESIGN.md` §7** (kept in lockstep with the code); this
+appendix carries the flagship surfaces in full and the rest in brief.
+
+### 19.1 Ask IRA — Chat (`chat/ChatView.tsx`)
+
+Flagship surface. One continuous editorial reading column; thread, composer,
+and hero share the same width. Specs verbatim from `ChatView.tsx`.
+
+**Reading column.** Thread `max-w-[52.5rem] mx-auto w-full px-4 sm:px-6 pb-10 space-y-10` (`pt-8`); composer `max-w-[52.5rem] mx-auto w-full px-4 sm:px-0`. **52.5rem (840px)** fixed. User row `justify-end` (content `w-fit max-w-[80%] ml-auto`); assistant `justify-start w-full`.
+
+**Empty-state hero.** Block `w-[52.5rem] max-w-full text-center`. `AuditifyHelloEffect` (`shared/HelloEffect`) `className="text-primary h-14 mx-auto"`. Headline `text-[2.125rem] font-medium tracking-[-0.02em] text-ink-900/85` with a `TextShimmer` (`font-bold duration={3} spread={2}`) span. Subhead `text-[0.9375rem] text-ink-500 mb-10`. `FloatingLines` behind it — the one decoration.
+
+**Composer (`.ai-border`).** `canvas-elevated`, 1px `canvas-border`, **`border-radius 1.25rem` (20px), flat (`box-shadow: none`)**; `:focus-within` → border `brand-300` only. Textarea `no-focus-ring w-full bg-transparent border-none outline-none resize-none px-5 pt-4 pb-2 text-[0.9375rem] leading-[1.5] text-ink-800 placeholder:text-ink-400 min-h-[24px] max-h-[240px]`, placeholder `Reply to Ira…`. Drag overlay `bg-brand-50/85 border-2 border-dashed border-brand-300`.
+
+**Attachment chips (`.composer-chips-row`).** Row `flex items-center gap-1.5 overflow-x-auto px-3 pt-3 pb-1` (right-edge fade mask). Source chip `bg-brand-50 text-ink-700 text-[0.75rem] px-2 py-1 rounded-md border border-brand-100 hover:border-brand-200`. File chip `bg-canvas-elevated text-ink-800 text-[0.8125rem] rounded-lg border-canvas-border hover:border-brand-200`. Opened via `DataPickerModal`.
+
+**Toolbar.** `flex items-center justify-between gap-2 px-3 pb-4`. Attach `size-8 rounded-lg text-ink-500 hover:bg-brand-50`. Stop `size-8 rounded-lg bg-ink-900 text-canvas-elevated` (`Square size 11 fill`). Send `size-8 rounded-lg bg-primary text-white hover:bg-primary-hover active:bg-brand-800` (`ArrowUp size 16`), hidden when empty.
+
+**User pill.** `bg-canvas-elevated`, 1px `canvas-border`, `rounded-2xl`, `shadow-[0_1px_2px_rgba(15,8,30,0.04)]`, hover `border-brand-200 shadow-[0_10px_28px_-14px_rgba(15,8,30,0.16)]`. `InlineEditBubble` edits in place.
+
+**AI response prose.** No bubble/avatar. `renderAssistantText` (`shared/AssistantMarkdown`) inside `text-[0.9375rem] leading-[1.65] text-ink-800 max-w-[66ch]` — **15px flush prose**, not the 17px `.ai-response` card primitive. Mono `brand-50` citation pills; 2px `brand-600` `.ai-caret`.
+
+**Thinking / loaders.** `ThinkingTrail` OR three `.ai-dot` (`brand-400`, 200ms stagger) — never both. `InlineAuditLoader` (`chat/ProgressiveLoader`) for plan → SQL → sources → results.
+
+**Evidence ledger.** Inline 4-cell row, `divide-x` hairlines, serif numerals 28px tabular, sans labels.
+
+**Follow-ups ("What next?").** Heading `text-[0.75rem] font-medium text-ink-900`. Chips wrap `flex flex-wrap gap-2`, each `inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[0.8125rem]`; rest `bg-canvas-elevated text-ink-700 border-canvas-border`, hover/selected `bg-brand-50 text-brand-700 border-brand-200`. **Cascade reveal** `delay 0.4 + i*0.13, duration 0.48, ease [0.22,1,0.36,1]`; hover spring `700/32/0.12`.
+
+**Workspace (`ChatWorkflowWorkspace`).** Segmented tab strip with Framer `layoutId` pill; Sources tab uses rich SourceCards. Embeds `ConfigurableChart` + `KpiTile`; `FullscreenChartModal`/`FullscreenTableModal` (`w-[800px] max-w-[92vw] rounded-2xl`).
+
+**Result actions.** `ExportReportButton`, `AddToDashboardModal`, `AddToReportModal` (`launch-ripple`/`launch-shimmer`). `ClarificationBlock`/`ClarificationCard`, `AssumptionsPanel`, `Button`, `useToast`.
+
+### 19.2 Dashboard (`dashboard/DashboardView.tsx`) — incl. the graph
+
+`react-grid-layout` canvas of draggable, resizable widgets. Specs verbatim.
+
+**Grid canvas.** `index.css`: placeholder `bg-brand-200 opacity-0.4 border-radius 16px`; 18×18 resize handle chevron `#94A3B8` → `brand-600` on hover; dragging `z-50 cursor: grabbing`.
+
+**KPI tile (`shared/KpiTile.tsx`).** Card `glass-card rounded-xl px-5 py-4 hover:border-brand-200 hover:shadow-[0_12px_28px_-14px_rgba(15,8,30,0.22)] transition-[border-color,box-shadow] duration-300`. Label `text-[0.6875rem] font-semibold text-ink-500 uppercase tracking-wide mb-2 truncate`. Value `text-[1.625rem] font-bold text-ink-900 leading-none tabular-nums` (`KpiCountUp`). Mount spring `320/18/0.7, delay 0.08+index*0.08`; hover `y:-3 scale 1.015` spring `420/22`. `.card-kpi` active = 2px `brand-600` bottom border.
+
+**The graph (`ConfigurableChart`, Recharts).** Six types: **Line**, **Area**, **Bar**, **Pie**, **Table**, **KPI**. Series palette `#7C3AED, #3d68ee, #10b981, #f59e0b, #9ca3af`; pie `[#3d68ee,#10b981,#f59e0b,#ef4444,#8b5cf6]`; editable 10-color `#6a12cd,#0ea5e9,#10b981,#f59e0b,#ef4444,#ec4899,#8b5cf6,#14b8a6,#f97316,#06b6d4`. Line/Area actual `type="monotone" strokeWidth={2}` (`dot r:4`, `activeDot r:6 stroke #fff`), target `strokeWidth={2} strokeDasharray="5 5"`; grid `strokeDasharray="3 3" stroke #f0f0f0 vertical={false}`. Bar `radius={[4,4,0,0]}` + optional `<Line strokeWidth={2.5}>`. Pie `outerRadius`. Table header `text-[0.625rem] font-bold text-[#6a12cd] uppercase tracking-[0.5px]` on `bg-[#faf5ff]/40`. Tooltips emphasize `text-[#26064a]`. Never RAG colors as decoration.
+
+**Widget builder.** `AddCardModal` hosts `LegendSection` / `TypographySection` (`…/imports/TypographySection-1760-98`) / `ConditionalFormattingSection` / `DataSeriesFormattingSection`. Plus `WhiteDropdown` (z-popover), `FileTreeView`, `AddDataModal`, `Orb`, `useToast`.
+
+### 19.3 Home (`home/HomeView.tsx`)
+
+The one sanctioned decorative surface — hero ships two ambient radial
+gradients (`brand-500` top-right + `brand-400` bottom-left). `NotificationRow`
+(`notifications/NotificationRow`) for the feed; `SeverityBadge`
+(`shared/StatusBadge`) for pills.
+
+### 19.4 Knowledge Hub (`knowledge/KnowledgeHubView.tsx`) + Data Sources
+
+`KnowledgeHubView` is a tab shell (`UnderlinedTabs`) hosting `DataSourcesView`
++ `SmartLearnComingSoon` + `FloatingLines`. **The contact-sheet gallery lives
+in `data-sources/DataSourcesView.tsx`** (replaced the old rail+preview pane
+2026-06-01). Toggle: `viewMode` in `localStorage('kh:viewMode')`, `LayoutGrid`/
+`Rows3` (15px), active `text-brand-700`. Grid `grid grid-cols-1 md:grid-cols-2
+lg:grid-cols-3 gap-4`. Card `group w-full flex items-center gap-3 px-4 py-3.5
+rounded-lg bg-canvas-elevated border` (rest `border-canvas-border
+hover:border-brand-300`, selected `border-brand-500 bg-brand-50/50`); hover
+`y:-3 boxShadow 0 8px 24px -10px rgb(15 8 30 /0.16)` spring `400/30`; icon tile
+`w-10 h-10 rounded-lg` + absolute hover checkbox. Lightbox →
+`DataSourceDetailView`, overlay `fixed inset-0 z-30`. Reuses `Button`,
+`ConfirmationModal`, `DataPickerModal`, `useToast`.
+
+### 19.5 Report (`reports/ReportsView.tsx`) + reader
+
+Only surfaces on **warm paper** (`paper-50/100`). `ReportBuilder`,
+`WidgetPickerParts` (`SectionHeader`/`Checkbox`/`KpiPreviewRow`/`TablePreviewRow`),
+`ConfigurableChart`, `SmartTable`, `KpiCountUp`, `renderAssistantText`,
+`StatusBadge`, `BulkAuditVariantView`. Reader column ~960px; excerpts may be
+serif italic.
+
+### 19.6 Governance — Control Library, RACM, Risk Register
+
+DataGrid surfaces via `SmartTable` (`shared/SmartTable`): comfortable 44px
+rows, compact 32px toggle, sticky first column past 5 cols, right-aligned
+numerics, row-select = `brand-600` left border + `brand-50` tint. Plus
+`CreateControlDrawer`, `ControlDetailView` (`governance/*`), `Orb`, `useToast`.
+Severity = border-less, icon-less pills, spelled-out labels — no RAG ramp.
+
+### 19.7 Execution — Control Testing, Evidence, Findings
+
+Workpaper surfaces (`execution/*`). Findings use the **single sanctioned
+side-stripe** (3px left-edge `risk`/`high`/`mitigated` on alert cards only).
+Evidence uses Evidence Blue + mono citation chips. Each embeds `Orb`; tables
+reuse `SmartTable`.
+
+### 19.8 Sidebar (`sidebar/`, every surface)
+
+Only persistently dark surface: `brand-900` (`#26064A`) + 1.8% noise. `NavItem`
+groups: Ask IRA / Home · Recents / Audit Planning · Engagements · Engagement
+Config · Engagement Final / Dashboard · Report · Risk Register / Control
+Library · Workflow Library / Knowledge Hub / Admin. Rest transparent →
+`rgba(255,255,255,0.08)` hover → `rgba(255,255,255,0.12)` active, text to white.
+
+### 19.9 Modals & overlays + shared primitives
+
+Layering: `z-popover 100` < `z-modal 200` < `z-toast 300`. Overlay primitives:
+`ConfirmationModal` (`shared/`), `ModalPrimitives` (`chat/`), `Toast`/`useToast`
+(`shared/`), `useDialogA11y` (focus trap + ESC + restore).
+
+Shared primitives (defined once in `shared/`, exact specs):
+
+- **`Button`** — 6 variants × 2 sizes (`sm` h-7/text-xs, `md` h-9/text-sm) × 4 shapes (`md`/`lg` default/`xl`/`full`). Base `active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-1`. Primary `bg-primary text-white shadow-sm shadow-brand-900/10 hover:bg-primary-hover`; stop `bg-ink-900 text-white`; outline `bg-canvas-elevated border border-canvas-border hover:bg-brand-50 hover:border-brand-200`; ghost `bg-transparent text-text-muted hover:bg-brand-50`; secondary `bg-brand-50 text-brand-700`; destructive `bg-risk text-white`.
+- **`SmartTable`** — table `w-full text-[0.8125rem]`/`text-[0.75rem]`; header `border-b border-border-light`; cells `py-3`; search `pl-8 pr-8 py-1.5 border bg-white text-[0.75rem] rounded-[8px]`; footer `px-4 py-3 border-t border-border-light bg-surface-2/30`; row-select `brand-600` left border + `brand-50`.
+- **`StatusBadge`/`SeverityBadge`** — `inline-flex items-center px-2.5 h-6 rounded-full text-[0.75rem] leading-[16px] font-medium tabular-nums`, no border/icon. Tones `risk`→`bg-risk-50 text-risk-700`, `high`, `mitigated`, `compliant`, `evidence`→`bg-evidence-50 text-evidence-700`, `info`→`bg-brand-50 text-brand-700`, `draft`→`bg-draft-50 text-draft-700`.
+- **`InlineRename`** (`shared/InlineRename.tsx`) — click-to-rename-in-place editor across the Knowledge Hub data-source surfaces. Input `flex-1 min-w-0 text-[0.875rem] font-semibold text-ink-900 bg-canvas-elevated border border-brand-600 focus:outline-none`; sizes `md` `h-8 px-2.5 rounded-lg` (cards) / `sm` `h-7 px-2 rounded-md` (file rows). Enter or blur commits, Escape cancels; ✓/✕ (`Check`/`X` 15) use `onMouseDown`-preventDefault so a click doesn't blur-commit first, `p-1.5 rounded-md hover:bg-brand-50`.
+- `KpiTile`/`KpiCountUp` (see §19.2), `Orb`, `FloatingLines`, `AssistantMarkdown` (prose + mono citation pills), `GlassCard` (`.glass-card`), `Breadcrumbs`, `DateFilterPicker`, `TextShimmer`, `HelloEffect`, `Persona`/`AIPersona`.
+
+---
+
+## 20. Build Kit — Reproduce This Exactly
+
+Everything needed to stand up the design language from scratch. Paste these
+in order and the surfaces in §19 fall out of the tokens + primitives below.
+
+> **Canonical artifact:** `./editorial-grc.css` in this skill folder is a
+> **byte-for-byte copy of the product's `src/index.css`**, generated by
+> `scripts/sync-design.mjs`. For an exact reproduction, **use that file
+> directly** — drop it in after `@import "tailwindcss";`. The tables in
+> §20.3–12.4 below *explain* that file (token → role, selector → purpose);
+> they are kept honest by `npm run check:design`, which fails CI / the
+> pre-commit hook if any token value drifts from the code. Do not hand-edit
+> `editorial-grc.css`; edit `src/index.css` and run `npm run sync:design`.
+
+### 20.1 Stack
+
+- **Tailwind v4** (CSS-first `@theme`, no `tailwind.config.js`), `@import "tailwindcss";`.
+- **React 19** + **Framer Motion** (`motion/react`) for the spring/cascade motion.
+- **Recharts** for charts (§19.2). **shadcn/ui + Radix** for menus/dialogs/tabs.
+- Fonts loaded via `<link>` (below), not `@import`, to avoid render delay.
+
+### 20.2 Fonts (`index.html` `<head>`)
+
+```html
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;520;600;700&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,300..600&family=Instrument+Serif:ital@0;1&display=swap" />
+```
+
+Inter = working surface · Source Serif 4 = display/authority · JetBrains Mono = numbers/IDs/citations · Instrument Serif = sparse editorial italic.
+
+### 20.3 Tokens — the full `@theme`
+
+Declare inside `@theme { … }` after `@import "tailwindcss";`. Each row is one CSS custom property.
+
+**Brand (anchor 600, dark anchor 900)**
+
+| Token | Hex | Role |
+|---|---|---|
+| `--color-brand-50` | `#F7F0FF` | tint fills, citation-pill bg, hover wash |
+| `--color-brand-100` | `#EDDEFE` | mesh stop, secondary-button hover |
+| `--color-brand-200` | `#DCBBFD` | hover border, drag placeholder |
+| `--color-brand-300` | `#C393FA` | composer focus border |
+| `--color-brand-400` | `#A366F0` | thinking dots, ambient gradient |
+| `--color-brand-500` | `#8838DE` | primary hover, ambient gradient |
+| `--color-brand-600` | `#6A12CD` | **the accent** — primary, focus ring, caret |
+| `--color-brand-700` | `#550FA5` | citation text, link |
+| `--color-brand-800` | `#3B0B72` | primary active |
+| `--color-brand-900` | `#26064A` | sidebar shell |
+| `--color-brand-950` | `#170330` | deepest brand |
+
+**Canvas (chrome surfaces)**
+
+| Token | Hex | Role |
+|---|---|---|
+| `--color-canvas` | `#FCFAFD` | page (under the radial mesh) |
+| `--color-canvas-elevated` | `#FFFFFF` | cards, inputs, AI surfaces |
+| `--color-canvas-border` | `#E5E7EB` | all structural hairlines (1px) |
+
+**Sidebar (dark shell — `rgba` on white)**
+
+| Token | Value | Role |
+|---|---|---|
+| `--color-sidebar-bg` | `#26064A` | shell fill |
+| `--color-sidebar-border` | `rgba(255,255,255,0.08)` | dividers |
+| `--color-sidebar-text` | `rgba(255,255,255,0.85)` | nav text |
+| `--color-sidebar-text-dim` | `rgba(255,255,255,0.55)` | dim text |
+| `--color-sidebar-text-muted` | `rgba(255,255,255,0.45)` | muted text |
+| `--color-sidebar-surface` | `rgba(255,255,255,0.06)` | item base |
+| `--color-sidebar-surface-hover` | `rgba(255,255,255,0.08)` | item hover |
+| `--color-sidebar-surface-active` | `rgba(255,255,255,0.12)` | item active |
+| `--color-sidebar-accent` | `#FFFFFF` | active text/icon |
+
+**Paper + ink (report surfaces only)**
+
+| Token | Hex | Role |
+|---|---|---|
+| `--color-paper-0` | `#FFFFFF` | report sheet |
+| `--color-paper-50` | `#FAF7F2` | warm report bg |
+| `--color-paper-100` | `#F3EEE5` | warm report bg (deeper) |
+| `--color-paper-200` | `#E5E7EB` | report border |
+| `--color-paper-300` | `#D6CCB7` | empty-state linework |
+| `--color-ink-300` | `#C2B9CB` | placeholder ink |
+| `--color-ink-400` | `#9A8FAE` | muted / meta |
+| `--color-ink-500` | `#6B5D82` | secondary text |
+| `--color-ink-600` | `#4A3D62` | — |
+| `--color-ink-700` | `#332848` | — |
+| `--color-ink-800` | `#1F1433` | primary body text |
+| `--color-ink-900` | `#0F0720` | strongest ink / numerals |
+
+**GRC semantic — base / `-50` tint / `-700` deep (no pure RAG)**
+
+| Family | base | `-50` | `-700` | Means |
+|---|---|---|---|---|
+| `--color-risk` | `#B42318` | `#FEF3F2` | `#912018` | Critical / error / destructive |
+| `--color-high` | `#C2410C` | `#FFF7ED` | `#9A3412` | High severity |
+| `--color-mitigated` | `#B45309` | `#FFFBEB` | `#92400E` | Medium / warning |
+| `--color-compliant` | `#15803D` | `#F0FDF4` | `#166534` | Low / compliant / success |
+| `--color-evidence` | `#0369A1` | `#F0F9FF` | `#075985` | Sources / info-blue |
+| `--color-info` | `#6A12CD` | `#F7F0FF` | `#550FA5` | Info (brand-tied) |
+| `--color-draft` | `#6B5D82` | `#F4F2F7` | `#4A3D62` | Draft / muted |
+
+Evidence carries a full provenance/chart ramp beyond the `-50`/`-700` shown above: `--color-evidence-100 #E0F2FE`, `-200 #BAE6FD`, `-300 #7DD3FC`, `-400 #38BDF8`, `-500 #0EA5E9`, `-600 #0284C7`.
+
+**Typography · Radius · Layer**
+
+| Token | Value | Role |
+|---|---|---|
+| `--font-display` | `'Source Serif 4', ui-serif, Georgia, serif` | hero, section openers, evidence |
+| `--font-serif` | `'Instrument Serif','Source Serif 4', …` | sparse editorial italic |
+| `--font-sans` | `'Inter', ui-sans-serif, system-ui, …` | working surface |
+| `--font-mono` | `'JetBrains Mono', ui-monospace, 'SF Mono', monospace` | numbers, IDs, citations |
+| `--radius-xs … -2xl` | `4 / 6 / 8 / 12 / 16 / 20px` | 8pt-grid corners (`lg` = card default) |
+| `--text-meta` | `0.8125rem` (13px) | dense labels / micro-body |
+| `--z-popover / -modal / -toast` | `100 / 200 / 300` | layering scale |
+
+Legacy aliases (`--color-primary → brand-600`, `--color-text → ink-800`, `--color-success → compliant`, …) map old names onto the editorial tokens so existing markup keeps working.
+
+### 20.4 Global base layer (from `src/index.css`)
+
+One row per selector; the **Declaration** cell is the exact CSS to apply.
+
+| Selector / `@rule` | Declaration | Purpose |
+|---|---|---|
+| `body` | `background-color: var(--color-canvas);` + `background-image:` three radial-gradients `at 0% 0% rgba(247,240,255,0.6)→transparent 50%`, `at 100% 100% rgba(252,250,253,0.9)→transparent 50%`, `at 50% 90% rgba(237,222,254,0.18)→transparent 60%`; `font-family: var(--font-sans); font-feature-settings: "ss01","cv11","tnum"; -webkit-font-smoothing: antialiased; line-height: 1.5` | the brand-tinted radial **mesh** — cards float, never flat white |
+| `.tabular, .tnum, [class*="tabular-nums"]` | `font-variant-numeric: tabular-nums` | every number |
+| `::selection` | `background: var(--color-brand-50); color: var(--color-brand-700)` | text selection |
+| `*` + `::-webkit-scrollbar` | `scrollbar-width: thin; scrollbar-color: var(--color-canvas-border) transparent;` thumb `5px` / `var(--color-canvas-border)` / `radius 3px` | subtle scrollbars |
+| `button/[role=button]/input/textarea/select:focus-visible` | `outline: none; box-shadow: 0 0 0 4px rgba(106,18,205,0.24); border-radius: var(--radius-md)` | **the one global focus ring** |
+| `.no-focus-ring:focus-visible` | `box-shadow: none` | composer opt-out (uses border tone) |
+| `.glass-card, .elevated-card, .card-content, .ai-card` | `background: var(--color-canvas-elevated); border: 1px solid var(--color-canvas-border); border-radius: var(--radius-lg); box-shadow: none; transition: border-color 200ms cubic-bezier(0.2,0,0,1)` | card primitive (flat at rest) |
+| `.glass-card:hover` | `border-color: var(--color-brand-200); box-shadow: none` | hover by border tint, not lift |
+| `.card-kpi.active, .card-kpi[data-active="true"]` | `border-bottom-color: var(--color-brand-600); border-bottom-width: 2px` | KPI active state |
+| `.card-alert-critical / -high / -medium` | `border-left: 3px solid var(--color-risk / -high / -mitigated)` | the **only** sanctioned side-stripe |
+| `.feed-item` / `:hover` | rest `background: transparent; border: 1px solid transparent; border-radius: var(--radius-md); transition: background-color 200ms cubic-bezier(0.2,0,0,1)` → hover `background: var(--color-brand-50); border-color: var(--color-canvas-border)` | activity / nav rows |
+| `.ai-border` | `background: var(--color-canvas-elevated); border: 1px solid var(--color-canvas-border); border-radius: 1.25rem; box-shadow: none; transition: border-color 100ms ease-out` | **composer — 20px, flat** |
+| `.ai-border:focus-within` | `border-color: var(--color-brand-300)` | focus = border tone only |
+| `.ai-response` | `background: var(--color-canvas-elevated); border: 1px solid; border-image: linear-gradient(135deg, rgba(106,18,205,0.24), rgba(168,85,247,0.24)) 1; border-radius: var(--radius-xl); padding: 24px 28px; font-size: 17px; line-height: 1.65; color: var(--color-ink-800); max-width: 66ch` | standalone AI card primitive |
+| `.ai-caret` + `@keyframes ai-caret-blink` | `width:2px; height:1em; background: var(--color-brand-600); margin-left:2px; animation: ai-caret-blink 1.2s steps(1) infinite` — `0%,49%{opacity:1} 50%,100%{opacity:0}` | streaming cursor (square) |
+| `.ai-dot` (+`:nth-child(2/3)`) + `@keyframes ai-pulse` | `width:6px; height:6px; background: var(--color-brand-400); border-radius:999px; animation: ai-pulse 1.8s cubic-bezier(0.34,1.56,0.64,1) infinite`; delays `200ms / 400ms`; keyframe `0,60,100%{opacity:.3;scale(.85)} 30%{opacity:1;scale(1)}` | thinking dots |
+| `.skeleton` + `@keyframes shimmer` | `background: linear-gradient(90deg, var(--color-paper-50), var(--color-canvas-border) 50%, var(--color-paper-50)); background-size: 200% 100%; animation: shimmer 1.5s ease-in-out infinite; border-radius: 8px` — `0%{-200% 0} 100%{200% 0}` | loading shimmer |
+| `.composer-chips-row` (+`::-webkit-scrollbar`) | `scrollbar-width: none; mask-image: linear-gradient(to right,#000 calc(100% - 28px),transparent 100%)`; `::-webkit-scrollbar{display:none}` | attachment row right-edge fade |
+| `@media (prefers-reduced-motion: reduce)` | `*, *::before, *::after { animation-duration:.01ms !important; transition-duration:.01ms !important }` | collapse all motion |
+
+### 20.5 Motion constants
+
+| Token | Value | Used for |
+|---|---|---|
+| Standard ease | `cubic-bezier(0.2, 0, 0, 1)` | state changes, 150–200ms |
+| Expo-out | `cubic-bezier(0.22, 1, 0.36, 1)` | reveals, message/chip entrances |
+| Vercel expo-out | `[0.16, 1, 0.3, 1]` | banners, drop overlays |
+| Caret blink | `steps(1)`, 1.2s | streaming cursor (square, not sine) |
+| Thinking dots | `ai-pulse` 1.8s, 200/400ms stagger | pre-token loader |
+| **Chip cascade** | `delay 0.4 + i*0.13, duration 0.48, expo-out` | follow-up "What next?" chips |
+| Chip hover spring | `stiffness 700, damping 32, mass 0.12` | featherweight chip lift |
+| KPI mount spring | `stiffness 320, damping 18, mass 0.7, delay 0.08+i*0.08` | KPI tiles |
+| Card hover spring | `stiffness 400–420, damping 22–30` | cards / source cards |
+
+`prefers-reduced-motion` collapses all of the above to 0.01ms globally.
+
+### 20.6 Paste-ready component recipes
+
+One row per component; the **Classes / markup** cell is copy-paste-ready.
+
+| Component | Classes / markup |
+|---|---|
+| **Button — primary** | `inline-flex items-center justify-center font-medium h-9 px-3.5 rounded-lg text-sm bg-primary text-white shadow-sm shadow-brand-900/10 hover:bg-primary-hover hover:shadow-md active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-1` |
+| Button — outline | `bg-canvas-elevated border border-canvas-border hover:bg-brand-50 hover:border-brand-200` |
+| Button — ghost | `bg-transparent text-text-muted hover:bg-brand-50` |
+| Button — secondary | `bg-brand-50 text-brand-700` |
+| Button — destructive | `bg-risk text-white` |
+| Button — stop | `bg-ink-900 text-white` |
+| **Severity pill** (no border/icon) | `inline-flex items-center px-2.5 h-6 rounded-full text-[0.75rem] leading-[16px] font-medium tabular-nums bg-risk-50 text-risk-700` *(swap `risk` → `high`/`mitigated`/`compliant`/`evidence`/`brand`(info)/`draft`, `-50`/`-700`)* |
+| **KPI tile — card** | `glass-card rounded-xl px-5 py-4 hover:border-brand-200 hover:shadow-[0_12px_28px_-14px_rgba(15,8,30,0.22)] transition-[border-color,box-shadow] duration-300` |
+| KPI tile — label | `text-[0.6875rem] font-semibold text-ink-500 uppercase tracking-wide mb-2 truncate` |
+| KPI tile — value | `text-[1.625rem] font-bold text-ink-900 leading-none tabular-nums` |
+| **Composer — shell** | `<div class="ai-border">` (20px, flat, border-tone focus) |
+| Composer — textarea | `no-focus-ring w-full bg-transparent border-none outline-none resize-none px-5 pt-4 pb-2 text-[0.9375rem] leading-[1.5] text-ink-800 placeholder:text-ink-400 min-h-[24px] max-h-[240px]` |
+| Composer — toolbar / send | `flex items-center justify-between gap-2 px-3 pb-4` · send `size-8 rounded-lg bg-primary text-white hover:bg-primary-hover active:bg-brand-800` |
+| **AI answer in thread** (no bubble) | `text-[0.9375rem] leading-[1.65] text-ink-800 max-w-[66ch]`; citation `font-mono text-[0.75rem] bg-brand-50 text-brand-700 px-1.5 rounded-full`; caret `<span class="ai-caret">`. *(The bordered `.ai-response` card is the standalone primitive; in-thread renders flatter.)* |
+| **Data table — row-select** | `bg-brand-50` + `box-shadow: inset 2px 0 0 var(--color-brand-600)` |
+
+### 20.7 Reproduction checklist
+
+| # | Step |
+|---|---|
+| 1 | Load the four fonts (§20.2) and `@import "tailwindcss"`. |
+| 2 | Paste the `@theme` tokens (§20.3) + the base layer (§20.4). |
+| 3 | Background must be the radial mesh, never flat white (§20.4 `body`). |
+| 4 | Every number gets `tabular-nums`; Source Serif only at hero / section / evidence. |
+| 5 | One accent (`brand-600`) on ≤10% of any screen; sidebar is the only dark surface. |
+| 6 | Borders before shadows; AI composer is flat + 20px + border-tone focus. |
+| 7 | Semantic colors are nouns, never a red→amber→green ramp; pills have no border/icon. |
+| 8 | Wire the motion constants (§20.5); honor `prefers-reduced-motion`. |
+| 9 | No em dash in product copy; no gradient text; no glassmorphism; no second gradient beyond the body mesh + AI response border. |
+
+---
+
+
+### 20.8 Type scale (rem-only · 4-base)
+
+The Auditify production type scale — **rem only**, every size a whole multiple of the `0.25rem` (4px) base step (the generic design-system scale is §3; this is the shipped ladder). px never appears in code.
+
+| Token | rem | Step | Role |
+|---|---|---|---|
+| `text-xs` | 0.75rem | ×3 | Caption, meta, labels, mono, IDs, chips |
+| `text-base` | 1rem | ×4 | Body — copy, chat, AI prose (cap 66ch) |
+| `text-lg` | 1.25rem | ×5 | Large body, subheading |
+| `text-xl` | 1.5rem | ×6 | Heading — section / card / dialog title |
+| `text-2xl` | 1.75rem | ×7 | KPI value, prominent heading |
+| `text-3xl` | 2rem | ×8 | Display — small |
+| `text-4xl` | 2.25rem | ×9 | Display |
+| `text-5xl` | 2.5rem | ×10 | Display |
+| `text-6xl` | 2.75rem | ×11 | Display — large |
+| `text-7xl` | 3rem | ×12 | Display — large |
+| `display` | 3.5rem | ×14 | Hero — empty-state, once / page |
+
+(`×13` / `3.25rem` skipped — nothing in the build lands there.)
 
 ---
 
