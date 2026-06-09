@@ -389,20 +389,21 @@ numeric cells: text-align right, numeric font
 - Use column group headers for risk matrices (Q1 / Q2 / Q3 / Q4).
 - Every table ships with a compact toggle; default is comfortable.
 
-### Badge / Pill — no border, no icon
+### Badge / Pill — bordered, no icon
 
-Pills are flat: tinted background + semantic text. **No border. No glyph.**
-The text label itself is the source of truth (so colorblind users rely on
-words, not icon/color).
+Pills are a tinted background + a soft tone **border** + semibold semantic text.
+**No glyph** — the spelled-out label is the source of truth (so colorblind users
+rely on words, not icon/color). This bordered pill is the **default**; a `flat`
+opt-out (no border, medium weight) exists for the rare place a border is too heavy.
 
 ```
 height: 20px (sm), 24px (md), 28px (lg)
-padding: 0 8px (sm), 0 10px (md), 0 12px (lg)
+padding: 0 8px (sm), 0 11px (md), 0 12px (lg)
 radius: 999px
-font: label
+font: label, semibold  (medium for the flat opt-out)
 background: [semantic]-50  (or alpha tint in dark mode)
 color: [semantic]-700 on light / [semantic] on dark
-border: none
+border: 1px solid [semantic] @ ~30% alpha  (no -200 token — tint the base; flat = none)
 ```
 
 Two taxonomies share the same style:
@@ -422,8 +423,8 @@ still carry redundant encoding (color + position + tooltip text).
 
 - Overlay: `ink-900` at 40% opacity + 4px backdrop-blur.
 - Surface: paper-0, 16px radius, shadow xl, max-width 560px (md) or 720px (lg).
-- Header: display-sm serif for narrative dialogs ("Delete audit?"), heading-md
-  sans for task dialogs ("Edit control").
+- Header: **Inter (sans) heading for all dialogs** — never serif. Dialog (centered)
+  and Drawer (right-side) share one title treatment, 16px radius, and px-7 padding.
 - Close button is a ghost icon-button, top-right, 16px from edge.
 
 ### AIResponse (signature pattern)
@@ -1089,6 +1090,10 @@ Select is a single-choice form input. Built on Radix `Select`.
 
 Placeholder: `ink-300` text. When empty, show placeholder; when set, show
 value in `ink-900`.
+
+**Multi-select** variant: each option carries a `Checkbox` (instead of the single
+✓), the trigger shows a count badge (`brand-600` pill), and the popover gains a
+select-all / clear footer. Single-select keeps the ✓-on-selected-row above.
 
 ### 10.5 Date picker
 
